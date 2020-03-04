@@ -1,4 +1,4 @@
-module github.com/soypita/hw01_hello_now
+module github.com/soypita/otus_golang_homework/hw01_hello_now
 
 go 1.14
 
