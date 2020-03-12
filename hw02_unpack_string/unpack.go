@@ -9,7 +9,8 @@ import (
 
 var ErrInvalidString = errors.New("invalid string")
 
-const EscapeSymbol = `\`
+const EscapeSymbolRune = '\\'
+const EscapeSymbolString = `\`
 const stringPart = 2
 const prevOffset = 1
 
@@ -26,16 +27,17 @@ func Unpack(s string) (string, error) {
 	countOfScreens := 0
 
 	for i, val := range inputSymbols {
-		if string(val) == EscapeSymbol {
+		if val == EscapeSymbolRune {
 			countOfScreens++
 			continue
 		}
+
 		if unicode.IsDigit(val) {
-			if i == 0 || (unicode.IsDigit(inputSymbols[i-1]) && string(inputSymbols[i-2]) != EscapeSymbol) {
+			if i == 0 || (unicode.IsDigit(inputSymbols[i-1]) && inputSymbols[i-2] != EscapeSymbolRune) {
 				return "", ErrInvalidString
 			}
 
-			builder.WriteString(strings.Repeat(EscapeSymbol, countOfScreens/stringPart))
+			builder.WriteString(strings.Repeat(EscapeSymbolString, countOfScreens/stringPart))
 
 			if countOfScreens%2 != 0 {
 				builder.WriteString(string(val))
@@ -48,7 +50,7 @@ func Unpack(s string) (string, error) {
 			}
 			countOfScreens = 0
 		} else if unicode.IsLetter(val) {
-			builder.WriteString(strings.Repeat(EscapeSymbol, countOfScreens/stringPart))
+			builder.WriteString(strings.Repeat(EscapeSymbolString, countOfScreens/stringPart))
 			builder.WriteString(string(val))
 			countOfScreens = 0
 		}
@@ -58,7 +60,7 @@ func Unpack(s string) (string, error) {
 		if countOfScreens%2 != 0 {
 			return "", ErrInvalidString
 		}
-		builder.WriteString(strings.Repeat(EscapeSymbol, countOfScreens/stringPart))
+		builder.WriteString(strings.Repeat(EscapeSymbolString, countOfScreens/stringPart))
 	}
 
 	return builder.String(), nil
