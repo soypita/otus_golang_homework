@@ -31,11 +31,6 @@ stages:
 jobs:
   include:
     - stage: "Tests"
-      name: "Test travis #1"
-      script: golangci-lint run ./...
-      if: BRANCH = hw02_unpack_string
-
-    - stage: "Tests"
       name: "go get"
       install: echo "skip"
       script: go get "github.com/${TRAVIS_REPO_SLUG}/${BRANCH}"
