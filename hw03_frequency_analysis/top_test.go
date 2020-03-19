@@ -48,6 +48,7 @@ var textWithNumbers = `А 747 Винни - так звали 123123 самую �
 var similarText1 = `Какой-то какойто`
 var similarText2 = `нога!, нога 'нога'`
 var singleValue = `Один`
+var textWithSkipChar = `Один - - -`
 
 type TestCase struct {
 	expected []string
@@ -75,6 +76,10 @@ func TestTop10(t *testing.T) {
 		{
 			expected: []string{"нога"},
 			inputText: similarText2,
+		},
+		{
+			expected: []string{"один"},
+			inputText: textWithSkipChar,
 		},
 	}
 
