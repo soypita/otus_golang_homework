@@ -7,7 +7,7 @@ import (
 )
 
 // Change to true if needed
-var taskWithAsteriskIsCompleted = false
+var taskWithAsteriskIsCompleted = true
 
 var text = `Как видите, он  спускается  по  лестнице  вслед  за  своим
 	другом   Кристофером   Робином,   головой   вниз,  пересчитывая
@@ -43,15 +43,58 @@ var text = `Как видите, он  спускается  по  лестни�
 	посидеть у огня и послушать какую-нибудь интересную сказку.
 		В этот вечер...`
 
+var textOnlyNumbers = `1 2 3 123124 140 0`
+var textWithNumbers = `А 747 Винни - так звали 123123 самую лучшую, 12314 самую745 добрую медведицу  747 в  зоологическом  саду`
+var similarText1 = `Какой-то какойто`
+var similarText2 = `нога!, нога 'нога'`
+var singleValue = `Один`
+
+type TestCase struct {
+	expected []string
+	inputText string
+}
+
 func TestTop10(t *testing.T) {
+	testCases := []TestCase{
+		{
+			expected: []string{"он", "а", "и", "что", "ты", "не", "если", "то", "его", "кристофер", "робин", "в"},
+			inputText: text,
+		},
+		{
+			expected: []string{"а", "винни", "так", "звали", "самую", "лучшую", "добрую", "медведицу", "в", "зоологическом", "саду"},
+			inputText: textWithNumbers,
+		},
+		{
+			expected: []string{"какой-то", "какойто"},
+			inputText: similarText1,
+		},
+		{
+			expected: []string{"один"},
+			inputText: singleValue,
+		},
+		{
+			expected: []string{"нога"},
+			inputText: similarText2,
+		},
+	}
+
+	t.Run("no words in number text", func(t *testing.T) {
+		assert.Len(t, Top10(textOnlyNumbers), 0)
+	})
+
 	t.Run("no words in empty string", func(t *testing.T) {
 		assert.Len(t, Top10(""), 0)
 	})
 
+	t.Run("no words in white space string", func(t *testing.T) {
+		assert.Len(t, Top10("                        "), 0)
+	})
+
 	t.Run("positive test", func(t *testing.T) {
 		if taskWithAsteriskIsCompleted {
-			expected := []string{"он", "а", "и", "что", "ты", "не", "если", "то", "его", "кристофер", "робин", "в"}
-			assert.Subset(t, expected, Top10(text))
+			for _, testCase := range testCases {
+				assert.Subset(t, testCase.expected, Top10(testCase.inputText))
+			}
 		} else {
 			expected := []string{"он", "и", "а", "что", "ты", "не", "если", "-", "то", "Кристофер"}
 			assert.ElementsMatch(t, expected, Top10(text))
