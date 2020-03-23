@@ -5,23 +5,28 @@ import (
 	"strings"
 )
 
-const whiteSpaceString = " "
-const emptyString = ""
-const characterToSkip = "-"
-const specialSymbols = `[0-9$&+,:;=?@#|'<>.^*()%!]`
-const whiteSpaceSymbol = `\s+`
-const sizeToReturn = 10
+const (
+	whiteSpaceString = " "
+	emptyString      = ""
+	characterToSkip  = "-"
+	specialSymbols   = `[0-9$&+,:;=?@#|'<>.^*()%!]`
+	whiteSpaceSymbol = `\s+`
+	sizeToReturn     = 10
+)
+
+var (
+	patternForSymbols = regexp.MustCompile(specialSymbols)
+	patternToSpace    = regexp.MustCompile(whiteSpaceSymbol)
+)
 
 func Top10(in string) []string {
-	patternForSymbols := regexp.MustCompile(specialSymbols)
 	inputWithoutSymbols := strings.Trim(patternForSymbols.ReplaceAllString(in, emptyString), whiteSpaceString)
 
 	if len(inputWithoutSymbols) == 0 {
-		return []string{}
+		return nil
 	}
 
-	patterToSpace := regexp.MustCompile(whiteSpaceSymbol)
-	preparedInString := patterToSpace.ReplaceAllString(inputWithoutSymbols, whiteSpaceString)
+	preparedInString := patternToSpace.ReplaceAllString(inputWithoutSymbols, whiteSpaceString)
 	splitInString := strings.Split(preparedInString, whiteSpaceString)
 
 	freqMap := map[string]int{}
