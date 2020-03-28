@@ -48,4 +48,34 @@ func TestList(t *testing.T) {
 		}
 		require.Equal(t, []int{50, 30, 10, 40, 60, 80, 70}, elems)
 	})
+
+	t.Run("basic operations", func(t *testing.T) {
+		l := NewList()
+		require.Equal(t, l.Len(), 0)
+		l.PushFront(10) // [10]
+		l.PushFront(20) // [20 10]
+		l.PushFront(30) // [30 20 10]
+
+		require.Equal(t, l.Len(), 3)
+		require.Equal(t, 10, l.Back().Value)
+
+		l.MoveToFront(l.Front().Prev) // [20 30 10]
+		require.Equal(t, 20, l.Front().Value)
+
+		// multi-type list
+		mL := NewList()
+		mL.PushFront(10) // [10]
+		mL.PushFront("second") // ["second" 10]
+		mL.PushFront(true) // [true "second" 10]
+		require.Equal(t, "second", mL.Back().Next.Value)
+
+	})
+
+	t.Run("remove on nil object", func(t *testing.T) {
+		l := NewList()
+		require.Equal(t, l.Len(), 0)
+		l.Remove(l.Front())
+		require.Equal(t, l.Len(), 0)
+	})
+
 }
