@@ -61,18 +61,19 @@ func (c *lruCache) Clear() {
 	backItem := c.queue.Back()
 	for {
 		delete(c.items, backItem.Value.(cacheItem).key)
-		c.queue.Remove(backItem)
 		backItem = backItem.Next
 		if backItem == nil {
 			break
 		}
 	}
+	c.queue = NewList()
 }
 
 func NewCache(capacity int) Cache {
-	cache := &lruCache{}
-	cache.capacity = capacity
-	cache.queue = &list{}
-	cache.items = make(map[Key]*listItem)
+	cache := &lruCache{
+		capacity: capacity,
+		queue:    NewList(),
+		items:    make(map[Key]*listItem),
+	}
 	return cache
 }
