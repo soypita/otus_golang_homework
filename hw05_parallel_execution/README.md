@@ -21,4 +21,3 @@
 - https://en.wikipedia.org/wiki/Producer%E2%80%93consumer_problem
 - `sync.WaitGroup`
 - `go test -v -race -count=100 .`
-
