@@ -65,6 +65,8 @@ func Run(tasks []Task, N int, M int) error { //nolint:gocritic
 			} else if doneCounter == len(tasks) {
 				isWorking = false
 			}
+		default:
+			continue
 		}
 	}
 
