@@ -19,8 +19,6 @@ func Run(tasks []Task, N int, M int) error { //nolint:gocritic
 	taskCh := make(chan Task, len(tasks))
 	resultCh := make(chan error, len(tasks))
 	quitCh := make(chan struct{})
-	defer wg.Wait()
-	defer close(quitCh)
 
 	// Start N workers
 	for i := 0; i < N; i++ {
@@ -35,6 +33,7 @@ func Run(tasks []Task, N int, M int) error { //nolint:gocritic
 	var (
 		errorCounter int
 		doneCounter  int
+		isError      bool
 	)
 
 	for res := range resultCh {
@@ -44,13 +43,23 @@ func Run(tasks []Task, N int, M int) error { //nolint:gocritic
 			doneCounter++
 		}
 		if errorCounter >= N {
-			return ErrErrorsLimitExceeded
+			// Prevent overrunning
+			isError = true
+			break
 		} else if doneCounter == len(tasks) {
 			break
 		}
 	}
 
-	return nil
+	close(taskCh)
+	close(quitCh)
+	wg.Wait()
+
+	if isError {
+		return ErrErrorsLimitExceeded
+	} else {
+		return nil
+	}
 }
 
 func executeTask(wg *sync.WaitGroup, taskCh <-chan Task, resultCh chan<- error, quitCh <-chan struct{}) {
@@ -59,9 +68,11 @@ func executeTask(wg *sync.WaitGroup, taskCh <-chan Task, resultCh chan<- error, 
 		select {
 		case <-quitCh:
 			return
-		case task := <-taskCh:
+		case task, ok := <-taskCh:
 			{
-				resultCh <- task()
+				if ok == true {
+					resultCh <- task()
+				}
 			}
 		}
 	}
