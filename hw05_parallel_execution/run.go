@@ -57,9 +57,8 @@ func Run(tasks []Task, N int, M int) error { //nolint:gocritic
 
 	if isError {
 		return ErrErrorsLimitExceeded
-	} else {
-		return nil
 	}
+	return nil
 }
 
 func executeTask(wg *sync.WaitGroup, taskCh <-chan Task, resultCh chan<- error, quitCh <-chan struct{}) {
@@ -70,7 +69,7 @@ func executeTask(wg *sync.WaitGroup, taskCh <-chan Task, resultCh chan<- error, 
 			return
 		case task, ok := <-taskCh:
 			{
-				if ok == true {
+				if ok {
 					resultCh <- task()
 				}
 			}
