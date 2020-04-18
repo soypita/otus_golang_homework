@@ -9,50 +9,9 @@ var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
 
 type Task func() error
 
-func executeTask(wg *sync.WaitGroup, taskCh <-chan Task, resultCh chan<- error, quitCh <-chan struct{}) {
-	defer wg.Done()
-	for {
-		select {
-		case task := <-taskCh:
-			{
-				resultCh <- task()
-			}
-		case <-quitCh:
-			return
-		}
-	}
-}
-
-func resultListener(errorLimit int, tasksNum int, resultCh <-chan error, errorCh chan<- bool) {
-	errorCounter := 0
-	doneCounter := 0
-
-	// Receive results
-	for {
-		select {
-		case res := <-resultCh:
-			if res != nil {
-				errorCounter++
-			}
-			if res == nil {
-				doneCounter++
-			}
-			if errorCounter >= errorLimit {
-				errorCh <- true
-				return
-			} else if doneCounter == tasksNum {
-				errorCh <- false
-				return
-			}
-		default:
-			continue
-		}
-	}
-}
-
 // Run starts tasks in N goroutines and stops its work when receiving M errors from tasks
 func Run(tasks []Task, N int, M int) error { //nolint:gocritic
-	if len(tasks) == 0 || N == 0 {
+	if len(tasks) == 0 || N <= 0 {
 		return nil
 	}
 
@@ -60,7 +19,8 @@ func Run(tasks []Task, N int, M int) error { //nolint:gocritic
 	taskCh := make(chan Task, len(tasks))
 	resultCh := make(chan error, len(tasks))
 	quitCh := make(chan struct{})
-	errorCh := make(chan bool)
+	defer wg.Wait()
+	defer close(quitCh)
 
 	// Start N workers
 	for i := 0; i < N; i++ {
@@ -72,25 +32,37 @@ func Run(tasks []Task, N int, M int) error { //nolint:gocritic
 	for _, val := range tasks {
 		taskCh <- val
 	}
+	var (
+		errorCounter int
+		doneCounter  int
+	)
 
-	// Start listener
-	go resultListener(M, len(tasks), resultCh, errorCh)
-
-	// Receive result
-	isErrorExceed := <-errorCh
-
-	// Stop all workers
-	for i := 0; i < N; i++ {
-		quitCh <- struct{}{}
-	}
-
-	// Wait until all goroutines done
-	wg.Wait()
-
-	// Check if we get error exceed
-	if isErrorExceed {
-		return ErrErrorsLimitExceeded
+	for res := range resultCh {
+		if res != nil {
+			errorCounter++
+		} else {
+			doneCounter++
+		}
+		if errorCounter >= N {
+			return ErrErrorsLimitExceeded
+		} else if doneCounter == len(tasks) {
+			break
+		}
 	}
 
 	return nil
+}
+
+func executeTask(wg *sync.WaitGroup, taskCh <-chan Task, resultCh chan<- error, quitCh <-chan struct{}) {
+	defer wg.Done()
+	for {
+		select {
+		case <-quitCh:
+			return
+		case task := <-taskCh:
+			{
+				resultCh <- task()
+			}
+		}
+	}
 }
