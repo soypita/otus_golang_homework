@@ -61,6 +61,26 @@ func TestPipeline(t *testing.T) {
 			int64(sleepPerStage)*int64(len(stages)+len(data)-1)+int64(fault))
 	})
 
+	t.Run("zero length of stages", func(t *testing.T) {
+		in := make(Bi)
+		data := []int{1, 2, 3, 4, 5}
+
+		go func() {
+			for _, v := range data {
+				in <- v
+			}
+			close(in)
+		}()
+
+		result := make([]string, 0)
+
+		for s := range ExecutePipeline(in, nil, make([]Stage, 0)...) {
+			result = append(result, s.(string))
+		}
+
+		require.Equal(t, len(result), 0)
+	})
+
 	t.Run("done case", func(t *testing.T) {
 		in := make(Bi)
 		done := make(Bi)
@@ -69,7 +89,8 @@ func TestPipeline(t *testing.T) {
 		// Abort after 200ms
 		abortDur := sleepPerStage * 2
 		go func() {
-			done <- <-time.After(abortDur)
+			<-time.After(abortDur)
+			close(done)
 		}()
 
 		go func() {
@@ -85,8 +106,32 @@ func TestPipeline(t *testing.T) {
 			result = append(result, s.(string))
 		}
 		elapsed := time.Since(start)
-
 		require.Len(t, result, 0)
 		require.Less(t, int64(elapsed), int64(abortDur)+int64(fault))
+	})
+
+	t.Run("partial result after done", func(t *testing.T) {
+		in := make(Bi)
+		done := make(Bi)
+		data := []int{1, 2, 3, 4, 5}
+
+		go func() {
+			for _, v := range data {
+				in <- v
+			}
+			close(in)
+		}()
+
+		result := make([]string, 0, 10)
+		var counter int
+		partialNumber := 3
+		for s := range ExecutePipeline(in, done, stages...) {
+			result = append(result, s.(string))
+			counter++
+			if counter == partialNumber {
+				close(done)
+			}
+		}
+		require.Len(t, result, partialNumber)
 	})
 }
