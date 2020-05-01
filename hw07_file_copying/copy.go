@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
 
@@ -44,21 +45,21 @@ func Copy(fromPath string, toPath string, offset, limit int64) error {
 	if offset != 0 {
 		_, err := fileFrom.Seek(offset, 0)
 		if err != nil {
-			return err
+			return fmt.Errorf("error while set offset: %w", err)
 		}
 	}
 
 	fileTo, err := os.Create(toPath)
 
 	if err != nil {
-		return err
+		return fmt.Errorf("error while creating new file: %w", err)
 	}
 
 	bar := pb.Full.Start64(limit)
 	barReader := bar.NewProxyReader(fileFrom)
 	_, err = io.CopyN(fileTo, barReader, limit)
 	if err != nil {
-		return err
+		return fmt.Errorf("error while copy data: %w", err)
 	}
 	bar.Finish()
 

@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
-	"log"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestCopy(t *testing.T) {
@@ -47,7 +47,6 @@ func TestCopy(t *testing.T) {
 		os.Mkdir(testDir, os.ModePerm)
 		defer os.Remove(testDir)
 		err := Copy(fileName, testDir, 0, 0)
-		log.Println("Error is ", err)
 		require.NotNil(t, err)
 	})
 }
