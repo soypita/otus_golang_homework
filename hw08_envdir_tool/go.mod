@@ -1,4 +1,4 @@
-module github.com/soypita/hw08_envdir_tool
+module github.com/soypita/otus_golang_homework/hw08_envdir_tool
 
 go 1.14
 

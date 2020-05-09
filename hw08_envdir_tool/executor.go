@@ -11,7 +11,7 @@ const (
 	minimalCmdLen      = 1
 )
 
-// RunCmd runs a command + arguments (cmd) with environment variables from env
+// RunCmd runs a command + arguments (cmd) with environment variables from env.
 func RunCmd(cmd []string, env Environment) (returnCode int) {
 	var resCmd *exec.Cmd
 	cmdLen := len(cmd)
