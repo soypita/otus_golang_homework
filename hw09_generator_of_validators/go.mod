@@ -1,4 +1,4 @@
-module github.com/soypita/otus_golang_homewrok/hw09_generator_of_validators
+module github.com/soypita/otus_golang_homework/hw09_generator_of_validators
 
 go 1.14
 
