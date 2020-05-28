@@ -29,6 +29,7 @@ func NewTelnetClient(address string, timeout time.Duration, in io.ReadCloser, ou
 		timeout: timeout,
 		in:      in,
 		out:     out,
+		doneCh:  make(chan struct{}),
 		sendCh:  make(chan struct{}),
 	}
 
@@ -38,6 +39,7 @@ func NewTelnetClient(address string, timeout time.Duration, in io.ReadCloser, ou
 type TelnetClientImpl struct {
 	address string
 	timeout time.Duration
+	doneCh  chan struct{}
 	sendCh  chan struct{}
 	conn    net.Conn
 	in      io.ReadCloser
@@ -56,10 +58,17 @@ func (t *TelnetClientImpl) Connect() error {
 
 func (t *TelnetClientImpl) Receive() error {
 	scanner := bufio.NewScanner(t.conn)
-	for scanner.Scan() {
-		fmt.Fprintln(t.out, scanner.Text())
+	for {
+		select {
+		case <-t.doneCh:
+			return nil
+		default:
+			if !scanner.Scan() {
+				return nil
+			}
+			fmt.Fprintln(t.out, scanner.Text())
+		}
 	}
-	return nil
 }
 
 func (t *TelnetClientImpl) Send() error {
@@ -79,6 +88,7 @@ func (t *TelnetClientImpl) Send() error {
 
 func (t *TelnetClientImpl) Close() error {
 	<-t.sendCh
+	close(t.doneCh)
 	err := t.conn.Close()
 	if err != nil {
 		return err
