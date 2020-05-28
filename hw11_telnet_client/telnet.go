@@ -1,20 +1,87 @@
 package main
 
 import (
-	"errors"
+	"bufio"
+	"fmt"
 	"io"
+	"net"
+	"os"
 	"time"
 )
 
-var ErrConnectionClosed = errors.New("connection closed by peer")
+const (
+	dialErrMsg      = "error to dial to host "
+	connectedMsg    = "...Connected to"
+	connectCloseMsg = "...Connection was closed by peer"
+	eofMsg          = "...EOF"
+)
 
 type TelnetClient interface {
-	// Place your code here
+	Connect() error
+	Close() error
+	Receive() error
+	Send() error
 }
 
 func NewTelnetClient(address string, timeout time.Duration, in io.ReadCloser, out io.Writer) TelnetClient {
-	// Place your code here
+	res := &TelnetClientImpl{
+		address: address,
+		timeout: timeout,
+		in:      in,
+		out:     out,
+		sendCh:  make(chan struct{}),
+	}
+
+	return res
+}
+
+type TelnetClientImpl struct {
+	address string
+	timeout time.Duration
+	sendCh  chan struct{}
+	conn    net.Conn
+	in      io.ReadCloser
+	out     io.Writer
+}
+
+func (t *TelnetClientImpl) Connect() error {
+	conn, err := net.DialTimeout("tcp", t.address, t.timeout)
+	if err != nil {
+		return fmt.Errorf("%s : %w", dialErrMsg, err)
+	}
+	t.conn = conn
+	fmt.Fprintf(os.Stderr, "%s %s\n", connectedMsg, t.address)
 	return nil
 }
 
-// Place your code here
+func (t *TelnetClientImpl) Receive() error {
+	scanner := bufio.NewScanner(t.conn)
+	for scanner.Scan() {
+		fmt.Fprintln(t.out, scanner.Text())
+	}
+	return nil
+}
+
+func (t *TelnetClientImpl) Send() error {
+	defer close(t.sendCh)
+	scanner := bufio.NewScanner(t.in)
+	for scanner.Scan() {
+		str := scanner.Text() + "\n"
+		_, err := t.conn.Write([]byte(str))
+		if err != nil {
+			fmt.Fprintln(os.Stderr, connectCloseMsg)
+			return nil
+		}
+	}
+	fmt.Fprintln(os.Stderr, eofMsg)
+	return nil
+}
+
+func (t *TelnetClientImpl) Close() error {
+	<-t.sendCh
+	err := t.conn.Close()
+	if err != nil {
+		return err
+	}
+	return nil
+}

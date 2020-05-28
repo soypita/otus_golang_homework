@@ -62,4 +62,30 @@ func TestTelnetClient(t *testing.T) {
 
 		wg.Wait()
 	})
+
+	t.Run("should return error if wrong timeout var pass", func(t *testing.T) {
+		wrongTimeoutVar := "five_seconds"
+		err := runProcess(&wrongTimeoutVar, []string{})
+		require.NotNil(t, err)
+	})
+
+	t.Run("should return error if wrong number of args pass", func(t *testing.T) {
+		timeout := "5s"
+		var args []string
+		err := runProcess(&timeout, args)
+		require.NotNil(t, err)
+	})
+
+	t.Run("should return error when connect to wrong host", func(t *testing.T) {
+		wrongAddress := "localhost:909090"
+		in := &bytes.Buffer{}
+		out := &bytes.Buffer{}
+
+		timeout, err := time.ParseDuration("10s")
+		require.NoError(t, err)
+
+		client := NewTelnetClient(wrongAddress, timeout, ioutil.NopCloser(in), out)
+
+		require.Error(t, client.Connect())
+	})
 }
