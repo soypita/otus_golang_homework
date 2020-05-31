@@ -51,6 +51,9 @@ func processStruct(buf io.Writer, t *template.Template, currStruct *ast.StructTy
 func handleTagString(buf io.Writer, t *template.Template, filed *ast.Field, tagString string, externalUserNonStructTypes map[string]userDefinedTypes) error {
 	var fieldTypeName string
 	tagList := strings.Split(tagString, "|")
+	if len(filed.Names) == 0 {
+		return fmt.Errorf("empty fields struct")
+	}
 	fieldName := filed.Names[0].Name
 
 	var isSliceType, isNeedToConvert bool
@@ -105,16 +108,16 @@ func handleTagString(buf io.Writer, t *template.Template, filed *ast.Field, tagS
 }
 
 // processTagList generate validation code for slice of tags on a struct field.
-func processTagList(t *template.Template, out io.Writer, tagList []string, fieldName string, fieldTypeName string, rawFieldName string, isNeedToConvert bool) error {
+func processTagList(t *template.Template, out io.Writer, tagList []string, fieldName, fieldTypeName, rawFieldName string, isNeedToConvert bool) error {
 	for _, tag := range tagList {
 		switch fieldTypeName {
 		case "string":
-			err := processStrTags(out, fieldName, fieldTypeName, rawFieldName, isNeedToConvert, tag, t)
+			err := processStrTags(out, t, fieldName, fieldTypeName, rawFieldName, tag, isNeedToConvert)
 			if err != nil {
 				return err
 			}
 		case "int":
-			err := processIntTags(out, fieldName, fieldTypeName, rawFieldName, isNeedToConvert, tag, t)
+			err := processIntTags(out, t, fieldName, fieldTypeName, rawFieldName, tag, isNeedToConvert)
 			if err != nil {
 				return err
 			}
@@ -126,95 +129,69 @@ func processTagList(t *template.Template, out io.Writer, tagList []string, field
 }
 
 // processStrTags generate validation code for string field type.
-func processStrTags(out io.Writer, fieldName string, fieldTypeName string, rawFieldName string, isNeedToConvert bool, tag string, t *template.Template) error {
+func processStrTags(out io.Writer, t *template.Template, fieldName, fieldTypeName, rawFieldName, tag string, isNeedToConvert bool) error {
+	var val string
+	var templateName string
 	switch {
 	case strings.HasPrefix(tag, lenValidationTag):
-		val := strings.TrimPrefix(tag, fmt.Sprintf("%s%s", lenValidationTag, tagSplitSymbol))
-		err := t.ExecuteTemplate(out, lenValidationTemlateName, validationParams{
-			FieldName:       fieldName,
-			Val:             val,
-			RawFieldName:    rawFieldName,
-			IsNeedToConvert: isNeedToConvert,
-			RawFiledType:    fieldTypeName,
-		})
-		if err != nil {
-			return fmt.Errorf("%s:%w", ErrExecuteTemplate, err)
-		}
+		val = strings.TrimPrefix(tag, fmt.Sprintf("%s%s", lenValidationTag, tagSplitSymbol))
+		templateName = lenValidationTemplateName
 	case strings.HasPrefix(tag, regexpValidationTag):
-		val := strings.TrimPrefix(tag, fmt.Sprintf("%s%s", regexpValidationTag, tagSplitSymbol))
-		err := t.ExecuteTemplate(out, regexpValidationTemplateName, validationParams{
-			FieldName:       fieldName,
-			Val:             fmt.Sprintf("`%s`", val),
-			RawFieldName:    rawFieldName,
-			IsNeedToConvert: isNeedToConvert,
-			RawFiledType:    fieldTypeName,
-		})
-		if err != nil {
-			return fmt.Errorf("%s:%w", ErrExecuteTemplate, err)
-		}
+		val = strings.TrimPrefix(tag, fmt.Sprintf("%s%s", regexpValidationTag, tagSplitSymbol))
+		val = fmt.Sprintf("`%s`", val)
+		templateName = regexpValidationTemplateName
 	case strings.HasPrefix(tag, inValidationTag):
-		val := strings.TrimPrefix(tag, fmt.Sprintf("%s%s", inValidationTag, tagSplitSymbol))
+		val = strings.TrimPrefix(tag, fmt.Sprintf("%s%s", inValidationTag, tagSplitSymbol))
 		splitVal := strings.Split(val, inArraySplitSymbol)
 		for i, v := range splitVal {
 			splitVal[i] = fmt.Sprintf(`"%s"`, v)
 		}
-		err := t.ExecuteTemplate(out, inListValidationTemplateName, validationParams{
-			FieldName:       fieldName,
-			Val:             strings.Join(splitVal, inArraySplitSymbol),
-			RawFieldName:    rawFieldName,
-			IsNeedToConvert: isNeedToConvert,
-			RawFiledType:    fieldTypeName,
-		})
-		if err != nil {
-			return fmt.Errorf("%s:%w", ErrExecuteTemplate, err)
-		}
+		val = strings.Join(splitVal, inArraySplitSymbol)
+		templateName = inListValidationTemplateName
 	default:
 		return fmt.Errorf(ErrUnsupportedTag)
+	}
+
+	err := t.ExecuteTemplate(out, templateName, validationParams{
+		FieldName:       fieldName,
+		Val:             val,
+		RawFieldName:    rawFieldName,
+		IsNeedToConvert: isNeedToConvert,
+		RawFiledType:    fieldTypeName,
+	})
+	if err != nil {
+		return fmt.Errorf("%s:%w", ErrExecuteTemplate, err)
 	}
 	return nil
 }
 
 // processIntTags generate validation code for int field type.
-func processIntTags(out io.Writer, fieldName string, fieldTypeName string, rawFieldName string, isNeedToConvert bool, tag string, t *template.Template) error {
+func processIntTags(out io.Writer, t *template.Template, fieldName, fieldTypeName, rawFieldName, tag string, isNeedToConvert bool) error {
+	var val string
+	var templateName string
 	switch {
 	case strings.HasPrefix(tag, minValidationTag):
-		val := strings.TrimPrefix(tag, fmt.Sprintf("%s%s", minValidationTag, tagSplitSymbol))
-		err := t.ExecuteTemplate(out, minValidationTemplateName, validationParams{
-			FieldName:       fieldName,
-			Val:             val,
-			RawFieldName:    rawFieldName,
-			IsNeedToConvert: isNeedToConvert,
-			RawFiledType:    fieldTypeName,
-		})
-		if err != nil {
-			return fmt.Errorf("%s:%w", ErrExecuteTemplate, err)
-		}
+		val = strings.TrimPrefix(tag, fmt.Sprintf("%s%s", minValidationTag, tagSplitSymbol))
+		templateName = minValidationTemplateName
 	case strings.HasPrefix(tag, maxValidationTag):
-		val := strings.TrimPrefix(tag, fmt.Sprintf("%s%s", maxValidationTag, tagSplitSymbol))
-		err := t.ExecuteTemplate(out, maxValidationTemplateName, validationParams{
-			FieldName:       fieldName,
-			Val:             val,
-			RawFieldName:    rawFieldName,
-			IsNeedToConvert: isNeedToConvert,
-			RawFiledType:    fieldTypeName,
-		})
-		if err != nil {
-			return fmt.Errorf("%s:%w", ErrExecuteTemplate, err)
-		}
+		val = strings.TrimPrefix(tag, fmt.Sprintf("%s%s", maxValidationTag, tagSplitSymbol))
+		templateName = maxValidationTemplateName
 	case strings.HasPrefix(tag, inValidationTag):
-		val := strings.TrimPrefix(tag, fmt.Sprintf("%s%s", inValidationTag, tagSplitSymbol))
-		err := t.ExecuteTemplate(out, inListValidationTemplateName, validationParams{
-			FieldName:       fieldName,
-			Val:             val,
-			RawFieldName:    rawFieldName,
-			IsNeedToConvert: isNeedToConvert,
-			RawFiledType:    fieldTypeName,
-		})
-		if err != nil {
-			return fmt.Errorf("%s:%w", ErrExecuteTemplate, err)
-		}
+		val = strings.TrimPrefix(tag, fmt.Sprintf("%s%s", inValidationTag, tagSplitSymbol))
+		templateName = inListValidationTemplateName
 	default:
 		return fmt.Errorf(ErrUnsupportedTag)
+	}
+
+	err := t.ExecuteTemplate(out, templateName, validationParams{
+		FieldName:       fieldName,
+		Val:             val,
+		RawFieldName:    rawFieldName,
+		IsNeedToConvert: isNeedToConvert,
+		RawFiledType:    fieldTypeName,
+	})
+	if err != nil {
+		return fmt.Errorf("%s:%w", ErrExecuteTemplate, err)
 	}
 	return nil
 }
