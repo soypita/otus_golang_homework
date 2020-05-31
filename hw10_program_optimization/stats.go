@@ -2,8 +2,8 @@ package hw10_program_optimization //nolint:golint,stylecheck
 
 import (
 	"bufio"
+	"fmt"
 	"io"
-	"regexp"
 	"strings"
 )
 
@@ -25,7 +25,6 @@ func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 
 func countDomains(r io.Reader, domain string) (DomainStat, error) {
 	result := make(DomainStat)
-	reg := regexp.MustCompile("\\." + domain)
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		var user User
@@ -33,7 +32,7 @@ func countDomains(r io.Reader, domain string) (DomainStat, error) {
 		if err != nil {
 			return nil, err
 		}
-		matched := reg.Match([]byte(user.Email))
+		matched := strings.HasSuffix(user.Email, fmt.Sprintf(".%s", domain))
 		if matched {
 			result[strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])]++
 		}
