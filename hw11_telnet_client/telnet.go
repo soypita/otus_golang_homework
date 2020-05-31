@@ -23,27 +23,25 @@ type TelnetClient interface {
 	Send() error
 }
 
-func NewTelnetClient(address string, timeout time.Duration, in io.ReadCloser, out io.Writer) TelnetClient {
+func NewTelnetClient(address string, timeout time.Duration, in io.Reader, out io.Writer) TelnetClient {
+	inputReader := bufio.NewReader(in)
 	res := &TelnetClientImpl{
-		address: address,
-		timeout: timeout,
-		in:      in,
-		out:     out,
-		doneCh:  make(chan struct{}),
-		sendCh:  make(chan struct{}),
+		address:     address,
+		timeout:     timeout,
+		inputReader: inputReader,
+		out:         out,
 	}
 
 	return res
 }
 
 type TelnetClientImpl struct {
-	address string
-	timeout time.Duration
-	doneCh  chan struct{}
-	sendCh  chan struct{}
-	conn    net.Conn
-	in      io.ReadCloser
-	out     io.Writer
+	address     string
+	timeout     time.Duration
+	conn        net.Conn
+	inputReader *bufio.Reader
+	connReader  *bufio.Reader
+	out         io.Writer
 }
 
 func (t *TelnetClientImpl) Connect() error {
@@ -52,43 +50,38 @@ func (t *TelnetClientImpl) Connect() error {
 		return fmt.Errorf("%s : %w", dialErrMsg, err)
 	}
 	t.conn = conn
+	t.connReader = bufio.NewReader(t.conn)
 	fmt.Fprintf(os.Stderr, "%s %s\n", connectedMsg, t.address)
 	return nil
 }
 
 func (t *TelnetClientImpl) Receive() error {
-	scanner := bufio.NewScanner(t.conn)
-	for {
-		select {
-		case <-t.doneCh:
-			return nil
-		default:
-			if !scanner.Scan() {
-				return nil
-			}
-			fmt.Fprintln(t.out, scanner.Text())
+	line, err := t.connReader.ReadString('\n')
+	if err != nil {
+		if err == io.EOF {
+			err = fmt.Errorf(connectCloseMsg)
 		}
+		return err
 	}
+	if _, err := fmt.Fprint(t.out, line); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (t *TelnetClientImpl) Send() error {
-	defer close(t.sendCh)
-	scanner := bufio.NewScanner(t.in)
-	for scanner.Scan() {
-		str := scanner.Text() + "\n"
-		_, err := t.conn.Write([]byte(str))
-		if err != nil {
-			fmt.Fprintln(os.Stderr, connectCloseMsg)
-			return nil
-		}
+	line, err := t.inputReader.ReadString('\n')
+	if err != nil {
+		return err
 	}
-	fmt.Fprintln(os.Stderr, eofMsg)
+	_, err = t.conn.Write([]byte(line))
+	if err != nil {
+		return fmt.Errorf(connectCloseMsg)
+	}
 	return nil
 }
 
 func (t *TelnetClientImpl) Close() error {
-	<-t.sendCh
-	close(t.doneCh)
 	err := t.conn.Close()
 	if err != nil {
 		return err

@@ -63,14 +63,8 @@ func TestTelnetClient(t *testing.T) {
 		wg.Wait()
 	})
 
-	t.Run("should return error if wrong timeout var pass", func(t *testing.T) {
-		wrongTimeoutVar := "five_seconds"
-		err := runProcess(&wrongTimeoutVar, []string{})
-		require.NotNil(t, err)
-	})
-
 	t.Run("should return error if wrong number of args pass", func(t *testing.T) {
-		timeout := "5s"
+		timeout, _ := time.ParseDuration("5s")
 		var args []string
 		err := runProcess(&timeout, args)
 		require.NotNil(t, err)
