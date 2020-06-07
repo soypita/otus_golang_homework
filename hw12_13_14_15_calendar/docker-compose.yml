@@ -1,0 +1,22 @@
+version: '3.1'
+services:
+    calendar:
+        image: calendar:latest
+        ports:
+            - "8080:8080"
+        depends_on:
+            - database
+        volumes:
+            - "./configs/:/app/configs/"
+            - "./logs/:/app/logs/"
+        command: ./app/calendar -config=/app/configs/config.yml
+    database:
+        image: postgres
+        environment:
+            POSTGRES_USER: soypita
+            POSTGRES_PASSWORD: soypita
+            POSTGRES_DB: calendar
+        volumes:
+            - /tmp/database-data:/var/lib/postgresql/data/
+        ports:
+            - 5432:5432
