@@ -19,6 +19,7 @@ env:
     - GO111MODULE=on
     - GOPROXY=https://proxy.golang.org
     - BRANCH="${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}"
+    - COMMIT_HASH="${TRAVIS_PULL_REQUEST_SHA}"
 
 before_install:
   - echo "current branch is ${BRANCH}"
@@ -33,7 +34,7 @@ jobs:
     - stage: "Tests"
       name: "go get"
       install: echo "skip"
-      script: cd /tmp && go get -u "github.com/${TRAVIS_REPO_SLUG}/${BRANCH}@${BRANCH}"
+      script: cd /tmp && go get "github.com/${TRAVIS_REPO_SLUG}/${BRANCH}@${COMMIT_HASH}"
 
     - stage: "Tests"
       name: "Linters"
