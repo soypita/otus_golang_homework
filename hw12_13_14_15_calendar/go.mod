@@ -19,5 +19,3 @@ require (
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 	gopkg.in/yaml.v2 v2.3.0
 )
-
-replace ./github/soypita/otus_golang_homework/hw12_13_14_15_calendar => ./github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar
