@@ -6,7 +6,6 @@ require (
 	github.com/cenkalti/backoff/v3 v3.2.2 // indirect
 	github.com/containerd/continuity v0.0.0-20200413184840-d3ef23f19fbb // indirect
 	github.com/go-sql-driver/mysql v1.5.0 // indirect
-	github.com/golangci/golangci-lint v1.27.0 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.7.4
 	github.com/jcmturner/gokrb5/v8 v8.3.0 // indirect
