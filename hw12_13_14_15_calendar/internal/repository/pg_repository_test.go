@@ -7,8 +7,8 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pressly/goose"
 	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
 	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/models"
+	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"os"
 	"sync"
@@ -231,7 +231,6 @@ func TestBasicPGRepository(t *testing.T) {
 		result, err := repo.GetEventByID(context.Background(), inEv.ID)
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
-		assert.True(t, inEv.Date.Equal(result.Date))
 		assert.Equal(t, inEv.Header, result.Header)
 		assert.Equal(t, inEv.Duration, result.Duration)
 		assert.Equal(t, inEv.Description, result.Description)
