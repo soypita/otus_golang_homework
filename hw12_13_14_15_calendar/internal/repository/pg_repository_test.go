@@ -8,7 +8,7 @@ import (
 	"github.com/pressly/goose"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	"github/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/models"
+	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/models"
 	"math/rand"
 	"os"
 	"sync"

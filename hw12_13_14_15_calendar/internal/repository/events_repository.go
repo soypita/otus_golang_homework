@@ -2,8 +2,9 @@ package repository
 
 import (
 	"context"
-	"github/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/models"
 	"time"
+
+	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/models"
 
 	"github.com/google/uuid"
 )

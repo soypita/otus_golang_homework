@@ -4,7 +4,10 @@ build:
 test:
 	go test -race ./...
 
-lint:
+install-deps:
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint
+
+lint: install-deps
 	golangci-lint run ./...
 
 run:

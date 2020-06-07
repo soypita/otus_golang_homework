@@ -3,15 +3,16 @@ package main
 import (
 	"context"
 	"flag"
-	"github/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/configs"
-	"github/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/handlers"
-	"github/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/logger"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/configs"
+	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/handlers"
+	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/logger"
 
 	"github.com/gorilla/mux"
 )

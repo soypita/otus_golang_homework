@@ -2,7 +2,8 @@ package providers
 
 import (
 	"fmt"
-	"github/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/repository"
+
+	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/repository"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq" // Postgres driver

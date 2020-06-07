@@ -3,9 +3,10 @@ package repository
 import (
 	"context"
 	"fmt"
-	"github/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/models"
 	"strings"
 	"time"
+
+	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/models"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
