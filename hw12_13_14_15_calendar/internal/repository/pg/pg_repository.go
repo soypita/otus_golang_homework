@@ -1,8 +1,9 @@
-package repository
+package pg
 
 import (
 	"context"
 	"fmt"
+	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/repository"
 	"strings"
 	"time"
 
@@ -19,26 +20,26 @@ type PGRepository struct {
 	db  *sqlx.DB
 }
 
-func NewPGRepository(log logrus.FieldLogger, db *sqlx.DB) EventsRepository {
+func NewPGRepository(log logrus.FieldLogger, db *sqlx.DB) repository.EventsRepository {
 	return &PGRepository{
 		log: log,
 		db:  db,
 	}
 }
 
-func (r *PGRepository) CreateEvent(ctx context.Context, event *models.Event) (*models.Event, error) {
+func (r *PGRepository) CreateEvent(ctx context.Context, event *models.Event) (uuid.UUID, error) {
 	_, err := r.db.NamedExecContext(ctx,
 		"INSERT INTO events (id, header, date, duration, description, ownerid, notifybefore) VALUES (:id, :header, :date, :duration, :description, :ownerid, :notifybefore)",
 		event)
 	if err != nil {
 		if resCode, ok := err.(*pq.Error); ok {
 			if resCode.Code == "23505" {
-				return nil, ErrDateBusy{}
+				return uuid.Nil, repository.ErrDateBusy{}
 			}
 		}
-		return nil, fmt.Errorf("error while create new event: %w", err)
+		return uuid.Nil, fmt.Errorf("error while create new event: %w", err)
 	}
-	return event, nil
+	return event.ID, nil
 }
 
 func (r *PGRepository) UpdateEvent(ctx context.Context, id uuid.UUID, event *models.Event) error {
@@ -61,7 +62,7 @@ func (r *PGRepository) UpdateEvent(ctx context.Context, id uuid.UUID, event *mod
 		return fmt.Errorf("error while update record with id %d : %w", id, err)
 	}
 	if count == 0 {
-		return ErrDateBusy{}
+		return repository.ErrDateBusy{}
 	}
 	return nil
 }
@@ -94,7 +95,7 @@ func (r *PGRepository) GetEventByID(ctx context.Context, id uuid.UUID) (*models.
 		`SELECT * FROM events WHERE id = $1`, id)
 	if err != nil {
 		if strings.Contains(err.Error(), "no rows in result set") {
-			return nil, ErrEventNotFound{}
+			return nil, repository.ErrEventNotFound{}
 		}
 		return nil, fmt.Errorf("error while find day events : %w", err)
 	}

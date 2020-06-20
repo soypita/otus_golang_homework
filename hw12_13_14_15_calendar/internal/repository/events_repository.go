@@ -10,7 +10,7 @@ import (
 )
 
 type EventsRepository interface {
-	CreateEvent(context.Context, *models.Event) (*models.Event, error)
+	CreateEvent(context.Context, *models.Event) (uuid.UUID, error)
 	UpdateEvent(context.Context, uuid.UUID, *models.Event) error
 	DeleteEvent(context.Context, uuid.UUID) error
 	GetAllEvents(context.Context) ([]*models.Event, error)

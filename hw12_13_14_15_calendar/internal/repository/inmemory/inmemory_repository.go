@@ -1,7 +1,8 @@
-package repository
+package inmemory
 
 import (
 	"context"
+	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/repository"
 	"sync"
 	"time"
 
@@ -17,7 +18,7 @@ type InMemRepository struct {
 	events map[uuid.UUID]*models.Event
 }
 
-func NewInMemRepository(log logrus.FieldLogger) EventsRepository {
+func NewInMemRepository(log logrus.FieldLogger) repository.EventsRepository {
 	return &InMemRepository{
 		log:    log,
 		mtx:    &sync.RWMutex{},
@@ -25,11 +26,11 @@ func NewInMemRepository(log logrus.FieldLogger) EventsRepository {
 	}
 }
 
-func (r *InMemRepository) CreateEvent(ctx context.Context, event *models.Event) (*models.Event, error) {
+func (r *InMemRepository) CreateEvent(ctx context.Context, event *models.Event) (uuid.UUID, error) {
 	r.mtx.RLock()
 	for _, e := range r.events {
 		if event.Date.Equal(e.Date) {
-			return nil, ErrDateBusy{}
+			return uuid.Nil, repository.ErrDateBusy{}
 		}
 	}
 	r.mtx.RUnlock()
@@ -37,14 +38,14 @@ func (r *InMemRepository) CreateEvent(ctx context.Context, event *models.Event) 
 	r.mtx.Lock()
 	r.events[event.ID] = event
 	r.mtx.Unlock()
-	return event, nil
+	return event.ID, nil
 }
 
 func (r *InMemRepository) UpdateEvent(ctx context.Context, id uuid.UUID, event *models.Event) error {
 	r.mtx.RLock()
 	for _, e := range r.events {
 		if event.Date.Equal(e.Date) {
-			return ErrDateBusy{}
+			return repository.ErrDateBusy{}
 		}
 	}
 	r.mtx.RUnlock()
@@ -77,7 +78,7 @@ func (r *InMemRepository) GetEventByID(ctx context.Context, id uuid.UUID) (*mode
 	defer r.mtx.RUnlock()
 	ev, ok := r.events[id]
 	if !ok {
-		return nil, ErrEventNotFound{}
+		return nil, repository.ErrEventNotFound{}
 	}
 	return ev, nil
 }
