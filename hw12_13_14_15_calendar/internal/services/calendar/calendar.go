@@ -2,10 +2,11 @@ package calendar
 
 import (
 	"context"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/models"
 	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/repository"
-	"time"
 )
 
 type Calendar struct {

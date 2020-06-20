@@ -2,9 +2,10 @@ package inmemory
 
 import (
 	"context"
-	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/repository"
 	"sync"
 	"time"
+
+	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/repository"
 
 	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/models"
 

@@ -3,9 +3,10 @@ package pg
 import (
 	"context"
 	"fmt"
-	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/repository"
 	"strings"
 	"time"
+
+	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/repository"
 
 	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/models"
 
@@ -15,19 +16,19 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type PGRepository struct {
+type Repository struct {
 	log logrus.FieldLogger
 	db  *sqlx.DB
 }
 
 func NewPGRepository(log logrus.FieldLogger, db *sqlx.DB) repository.EventsRepository {
-	return &PGRepository{
+	return &Repository{
 		log: log,
 		db:  db,
 	}
 }
 
-func (r *PGRepository) CreateEvent(ctx context.Context, event *models.Event) (uuid.UUID, error) {
+func (r *Repository) CreateEvent(ctx context.Context, event *models.Event) (uuid.UUID, error) {
 	_, err := r.db.NamedExecContext(ctx,
 		"INSERT INTO events (id, header, date, duration, description, ownerid, notifybefore) VALUES (:id, :header, :date, :duration, :description, :ownerid, :notifybefore)",
 		event)
@@ -42,7 +43,7 @@ func (r *PGRepository) CreateEvent(ctx context.Context, event *models.Event) (uu
 	return event.ID, nil
 }
 
-func (r *PGRepository) UpdateEvent(ctx context.Context, id uuid.UUID, event *models.Event) error {
+func (r *Repository) UpdateEvent(ctx context.Context, id uuid.UUID, event *models.Event) error {
 	result, err := r.db.NamedExecContext(ctx,
 		"UPDATE events SET header = :header, date = :date, duration = :duration, description = :description, ownerid = :ownerid, notifybefore = :notifybefore WHERE id = :id AND date != :date",
 		map[string]interface{}{
@@ -67,7 +68,7 @@ func (r *PGRepository) UpdateEvent(ctx context.Context, id uuid.UUID, event *mod
 	return nil
 }
 
-func (r *PGRepository) DeleteEvent(ctx context.Context, id uuid.UUID) error {
+func (r *Repository) DeleteEvent(ctx context.Context, id uuid.UUID) error {
 	_, err := r.db.NamedExecContext(ctx,
 		"DELETE FROM events WHERE id = :id",
 		map[string]interface{}{
@@ -79,7 +80,7 @@ func (r *PGRepository) DeleteEvent(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-func (r *PGRepository) GetAllEvents(ctx context.Context) ([]*models.Event, error) {
+func (r *Repository) GetAllEvents(ctx context.Context) ([]*models.Event, error) {
 	var events []*models.Event
 	err := r.db.SelectContext(ctx, &events,
 		`SELECT * FROM events`)
@@ -89,7 +90,7 @@ func (r *PGRepository) GetAllEvents(ctx context.Context) ([]*models.Event, error
 	return events, nil
 }
 
-func (r *PGRepository) GetEventByID(ctx context.Context, id uuid.UUID) (*models.Event, error) {
+func (r *Repository) GetEventByID(ctx context.Context, id uuid.UUID) (*models.Event, error) {
 	event := models.Event{}
 	err := r.db.GetContext(ctx, &event,
 		`SELECT * FROM events WHERE id = $1`, id)
@@ -102,7 +103,7 @@ func (r *PGRepository) GetEventByID(ctx context.Context, id uuid.UUID) (*models.
 	return &event, nil
 }
 
-func (r *PGRepository) FindDayEvents(ctx context.Context, day time.Time) ([]*models.Event, error) {
+func (r *Repository) FindDayEvents(ctx context.Context, day time.Time) ([]*models.Event, error) {
 	var events []*models.Event
 	err := r.db.SelectContext(ctx, &events,
 		`SELECT * FROM events WHERE date BETWEEN $1 AND $1 + (interval '1d')`, day)
@@ -112,7 +113,7 @@ func (r *PGRepository) FindDayEvents(ctx context.Context, day time.Time) ([]*mod
 	return events, nil
 }
 
-func (r *PGRepository) FindWeekEvents(ctx context.Context, day time.Time) ([]*models.Event, error) {
+func (r *Repository) FindWeekEvents(ctx context.Context, day time.Time) ([]*models.Event, error) {
 	var events []*models.Event
 	err := r.db.SelectContext(ctx, &events,
 		`SELECT * FROM events WHERE date BETWEEN $1 AND $1 + (interval '7 weeks')`, day)
@@ -122,7 +123,7 @@ func (r *PGRepository) FindWeekEvents(ctx context.Context, day time.Time) ([]*mo
 	return events, nil
 }
 
-func (r PGRepository) FindMonthEvents(ctx context.Context, day time.Time) ([]*models.Event, error) {
+func (r Repository) FindMonthEvents(ctx context.Context, day time.Time) ([]*models.Event, error) {
 	var events []*models.Event
 	err := r.db.SelectContext(ctx, &events,
 		`SELECT * FROM events WHERE date BETWEEN $1 AND $1 + (interval '1 months')`, day)
