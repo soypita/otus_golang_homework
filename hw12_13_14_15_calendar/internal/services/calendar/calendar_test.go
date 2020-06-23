@@ -1,6 +1,7 @@
 package calendar
 
 import (
+	"context"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/models"
@@ -15,7 +16,7 @@ func TestCalendarService(t *testing.T) {
 	t.Run(`should successfully create event`, func(t *testing.T) {
 		repo := inmemory.NewInMemRepository(log)
 		calendar := NewCalendar(repo)
-		resId, err := calendar.CreateEvent(&models.Event{
+		resId, err := calendar.CreateEvent(context.Background(), &models.Event{
 			Header:       "Test",
 			Date:         time.Now(),
 			Duration:     time.Duration(5) * time.Hour,
@@ -30,7 +31,7 @@ func TestCalendarService(t *testing.T) {
 	t.Run(`should successfully update event`, func(t *testing.T) {
 		repo := inmemory.NewInMemRepository(log)
 		calendar := NewCalendar(repo)
-		resId, err := calendar.CreateEvent(&models.Event{
+		resId, err := calendar.CreateEvent(context.Background(), &models.Event{
 			Header:       "Test",
 			Date:         time.Now(),
 			Duration:     time.Duration(5) * time.Hour,
@@ -49,16 +50,16 @@ func TestCalendarService(t *testing.T) {
 			OwnerID:      uuid.UUID{},
 			NotifyBefore: 0,
 		}
-		err = calendar.UpdateEvent(resId, updateEvent)
+		err = calendar.UpdateEvent(context.Background(), resId, updateEvent)
 		assert.NoError(t, err)
-		resUpdate, err := calendar.GetEventByID(resId)
+		resUpdate, err := calendar.GetEventByID(context.Background(), resId)
 		assert.NoError(t, err)
 		assert.Equal(t, updateEvent, resUpdate)
 	})
 	t.Run(`should successfully delete event from repo`, func(t *testing.T) {
 		repo := inmemory.NewInMemRepository(log)
 		calendar := NewCalendar(repo)
-		resId, err := calendar.CreateEvent(&models.Event{
+		resId, err := calendar.CreateEvent(context.Background(), &models.Event{
 			Header:       "Test",
 			Date:         time.Now(),
 			Duration:     time.Duration(5) * time.Hour,
@@ -68,9 +69,9 @@ func TestCalendarService(t *testing.T) {
 		})
 		assert.NoError(t, err)
 		assert.NotEqual(t, uuid.Nil, resId)
-		err = calendar.DeleteEvent(resId)
+		err = calendar.DeleteEvent(context.Background(), resId)
 		assert.NoError(t, err)
-		events, err := calendar.GetAllEvents()
+		events, err := calendar.GetAllEvents(context.Background())
 		assert.NoError(t, err)
 		assert.Empty(t, events)
 	})
@@ -117,14 +118,14 @@ func TestCalendarService(t *testing.T) {
 			OwnerID:      uuid.UUID{},
 			NotifyBefore: time.Duration(15) * time.Minute,
 		}
-		_, err = calendar.CreateEvent(firstEvent)
+		_, err = calendar.CreateEvent(context.Background(), firstEvent)
 		assert.NoError(t, err)
-		_, err = calendar.CreateEvent(secondEvent)
+		_, err = calendar.CreateEvent(context.Background(), secondEvent)
 		assert.NoError(t, err)
-		_, err = calendar.CreateEvent(thirdEvent)
+		_, err = calendar.CreateEvent(context.Background(), thirdEvent)
 		assert.NoError(t, err)
 
-		results, err := calendar.FindDayEvents(startDayTime)
+		results, err := calendar.FindDayEvents(context.Background(), startDayTime)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, results)
 		assert.Equal(t, 2, len(results))
@@ -175,14 +176,14 @@ func TestCalendarService(t *testing.T) {
 			OwnerID:      uuid.UUID{},
 			NotifyBefore: time.Duration(15) * time.Minute,
 		}
-		_, err = calendar.CreateEvent(firstEvent)
+		_, err = calendar.CreateEvent(context.Background(), firstEvent)
 		assert.NoError(t, err)
-		_, err = calendar.CreateEvent(secondEvent)
+		_, err = calendar.CreateEvent(context.Background(), secondEvent)
 		assert.NoError(t, err)
-		_, err = calendar.CreateEvent(thirdEvent)
+		_, err = calendar.CreateEvent(context.Background(), thirdEvent)
 		assert.NoError(t, err)
 
-		results, err := calendar.FindWeekEvents(startWeekTime)
+		results, err := calendar.FindWeekEvents(context.Background(), startWeekTime)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, results)
 		assert.Equal(t, 2, len(results))
@@ -233,14 +234,14 @@ func TestCalendarService(t *testing.T) {
 			OwnerID:      uuid.UUID{},
 			NotifyBefore: time.Duration(15) * time.Minute,
 		}
-		_, err = calendar.CreateEvent(firstEvent)
+		_, err = calendar.CreateEvent(context.Background(), firstEvent)
 		assert.NoError(t, err)
-		_, err = calendar.CreateEvent(secondEvent)
+		_, err = calendar.CreateEvent(context.Background(), secondEvent)
 		assert.NoError(t, err)
-		_, err = calendar.CreateEvent(thirdEvent)
+		_, err = calendar.CreateEvent(context.Background(), thirdEvent)
 		assert.NoError(t, err)
 
-		results, err := calendar.FindMonthEvents(startMonthTime)
+		results, err := calendar.FindMonthEvents(context.Background(), startMonthTime)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, results)
 		assert.Equal(t, 2, len(results))

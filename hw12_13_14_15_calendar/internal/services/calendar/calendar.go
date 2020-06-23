@@ -17,51 +17,35 @@ func NewCalendar(repo repository.EventsRepository) *Calendar {
 	return &Calendar{events: repo}
 }
 
-func (c *Calendar) CreateEvent(ev *models.Event) (uuid.UUID, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+func (c *Calendar) CreateEvent(ctx context.Context, ev *models.Event) (uuid.UUID, error) {
 	ev.ID = uuid.New()
 	return c.events.CreateEvent(ctx, ev)
 }
 
-func (c *Calendar) UpdateEvent(id uuid.UUID, ev *models.Event) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+func (c *Calendar) UpdateEvent(ctx context.Context, id uuid.UUID, ev *models.Event) error {
 	return c.events.UpdateEvent(ctx, id, ev)
 }
 
-func (c *Calendar) DeleteEvent(id uuid.UUID) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+func (c *Calendar) DeleteEvent(ctx context.Context, id uuid.UUID) error {
 	return c.events.DeleteEvent(ctx, id)
 }
 
-func (c *Calendar) GetAllEvents() ([]*models.Event, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+func (c *Calendar) GetAllEvents(ctx context.Context) ([]*models.Event, error) {
 	return c.events.GetAllEvents(ctx)
 }
 
-func (c *Calendar) GetEventByID(id uuid.UUID) (*models.Event, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+func (c *Calendar) GetEventByID(ctx context.Context, id uuid.UUID) (*models.Event, error) {
 	return c.events.GetEventByID(ctx, id)
 }
 
-func (c *Calendar) FindDayEvents(startDay time.Time) ([]*models.Event, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+func (c *Calendar) FindDayEvents(ctx context.Context, startDay time.Time) ([]*models.Event, error) {
 	return c.events.FindDayEvents(ctx, startDay)
 }
 
-func (c *Calendar) FindWeekEvents(weekStartDay time.Time) ([]*models.Event, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+func (c *Calendar) FindWeekEvents(ctx context.Context, weekStartDay time.Time) ([]*models.Event, error) {
 	return c.events.FindWeekEvents(ctx, weekStartDay)
 }
 
-func (c *Calendar) FindMonthEvents(monthStartDay time.Time) ([]*models.Event, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+func (c *Calendar) FindMonthEvents(ctx context.Context, monthStartDay time.Time) ([]*models.Event, error) {
 	return c.events.FindMonthEvents(ctx, monthStartDay)
 }
