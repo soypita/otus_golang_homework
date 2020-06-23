@@ -1,0 +1,8 @@
+host: ""
+port: 8080
+log:
+  path: /app/logs/logfile.log
+  level: INFO
+database:
+  in_memory: false
+  dsn: "host=database port=5432 user=soypita password=soypita dbname=calendar sslmode=disable"

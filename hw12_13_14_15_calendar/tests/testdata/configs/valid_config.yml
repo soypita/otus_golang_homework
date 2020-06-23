@@ -1,0 +1,8 @@
+host: localhost
+port: 8080
+log:
+  path: /app/logs/logfile.log
+  level: INFO
+database:
+  in_memory: false
+  dsn: "host=test port=test user=test password=test dbname=test sslmode=disable"
