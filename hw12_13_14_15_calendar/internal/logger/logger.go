@@ -8,7 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func NewLogger(logOut io.Writer, logLevel string) (logrus.FieldLogger, error) {
+func NewLogger(logOut io.Writer, logLevel string) (*logrus.Logger, error) {
 	log := logrus.New()
 	Formatter := new(logrus.TextFormatter)
 	Formatter.TimestampFormat = "02-01-2006 15:04:05"

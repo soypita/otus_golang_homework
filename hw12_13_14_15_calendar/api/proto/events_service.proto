@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = ".;grpc";
+
+service Calendar {
+  rpc CreateEvent(Event) returns (EventId);
+  rpc UpdateEvent(EventUpdate) returns (google.protobuf.Empty);
+  rpc DeleteEvent(EventId) returns (google.protobuf.Empty);
+  rpc GetAllEvents(google.protobuf.Empty) returns (Events);
+  rpc GetEventByID(EventId) returns (Event);
+  rpc FindDayEvents(DateRequest) returns (Events);
+  rpc FindWeekEvents(DateRequest) returns (Events);
+  rpc FindMonthEvents(DateRequest) returns (Events);
+}
+
+message Event {
+  string header = 1;
+  google.protobuf.Timestamp date = 2;
+  google.protobuf.Duration duration = 3;
+  string description = 4;
+  string ownerId = 5;
+  google.protobuf.Duration notifyBefore = 6;
+}
+
+message EventUpdate {
+  string id = 1;
+  Event event = 2;
+}
+
+message EventId {
+  string id = 1;
+}
+
+message Events {
+  repeated Event events = 1;
+}
+
+message DateRequest {
+  google.protobuf.Timestamp date = 1;
+}

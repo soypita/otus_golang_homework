@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/models"
+	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/pkg/models"
 
 	"github.com/google/uuid"
 )

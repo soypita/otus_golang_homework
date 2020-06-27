@@ -8,9 +8,10 @@ import (
 )
 
 type Config struct {
-	Host string `yaml:"host"`
-	Port string `yaml:"port"`
-	Log  struct {
+	Host     string `yaml:"host"`
+	RestPort string `yaml:"rest_port"`
+	GrpcPort string `yaml:"grpc_port"`
+	Log      struct {
 		Path  string `yaml:"path"`
 		Level string `yaml:"level"`
 	} `yaml:"log"`

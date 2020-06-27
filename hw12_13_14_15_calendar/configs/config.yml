@@ -1,8 +1,9 @@
 host: ""
-port: 8080
+rest_port: 8080
+grpc_port: 8090
 log:
-  path: /app/logs/logfile.log
+  path: logs/logfile.log
   level: INFO
 database:
-  in_memory: false
+  in_memory: true
   dsn: "host=database port=5432 user=soypita password=soypita dbname=calendar sslmode=disable"
