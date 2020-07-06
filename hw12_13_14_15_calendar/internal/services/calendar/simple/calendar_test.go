@@ -1,4 +1,4 @@
-package calendar
+package simple
 
 import (
 	"context"

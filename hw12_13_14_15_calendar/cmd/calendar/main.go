@@ -1,20 +1,17 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"net"
-	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
-	"time"
 
+	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/services/calendar/simple"
+
+	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/api/grpc"
+	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/api/rest"
 	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/configs"
-	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/handlers"
 	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/logger"
-
-	"github.com/gorilla/mux"
+	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/providers"
 )
 
 func main() {
@@ -35,42 +32,25 @@ func main() {
 		panic(err)
 	}
 
-	h := handlers.NewEventsHandler(log)
-	router := mux.NewRouter()
-	router.Use(h.LoggingMiddleware)
+	restAddr := net.JoinHostPort(config.Host, config.RestPort)
+	grpcAddr := net.JoinHostPort(config.Host, config.GrpcPort)
 
-	router.HandleFunc("/health", h.HealthCheck).Methods("GET")
+	repo, err := providers.NewRepository(log, config.Database.DSN, config.Database.InMemory)
+	if err != nil {
+		log.Fatalf("failed to initialize repository %s", err)
+	}
+	calendar := simple.NewCalendar(repo)
 
-	addr := net.JoinHostPort(config.Host, config.Port)
-	server := http.Server{
-		Addr:         addr,
-		Handler:      router,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 5 * time.Second,
+	grpcServer := grpc.NewCalendarAPIServer(log, grpcAddr, calendar, nil)
+	restServer := rest.NewCalendarAPIServer(log, restAddr, calendar, nil)
+
+	if err := grpcServer.Start(); err != nil {
+		log.Fatalf("failed to start grpc server %s", err)
 	}
 
-	notifyCh := make(chan os.Signal, 1)
-	errorCh := make(chan error)
-	signal.Notify(notifyCh, syscall.SIGINT, syscall.SIGTERM)
-
-	go func() {
-		<-notifyCh
-		log.Println("Stopping server")
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		server.SetKeepAlivesEnabled(false)
-		if err := server.Shutdown(ctx); err != nil {
-			errorCh <- err
-		}
-		close(errorCh)
-	}()
-
-	log.Printf("Start server on %s....", addr)
-	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Panic(err)
+	if err := restServer.ListenAndServe(); err != nil {
+		log.Fatalf("failed to stop rest server %s", err)
 	}
-	if err := <-errorCh; err != nil {
-		log.Panic(err)
-	}
-	log.Println("Stop server successfully")
+
+	grpcServer.Stop()
 }
