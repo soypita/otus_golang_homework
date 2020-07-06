@@ -5,12 +5,13 @@ import (
 	"net"
 	"os"
 
+	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/services/calendar/simple"
+
 	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/api/grpc"
 	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/api/rest"
 	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/configs"
 	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/logger"
 	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/providers"
-	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/services/calendar"
 )
 
 func main() {
@@ -38,10 +39,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to initialize repository %s", err)
 	}
-	calendar := calendar.NewCalendar(repo)
+	calendar := simple.NewCalendar(repo)
 
-	grpcServer := grpc.NewCalendarAPIServer(log, grpcAddr, calendar)
-	restServer := rest.NewCalendarAPIServer(log, restAddr, calendar)
+	grpcServer := grpc.NewCalendarAPIServer(log, grpcAddr, calendar, nil)
+	restServer := rest.NewCalendarAPIServer(log, restAddr, calendar, nil)
 
 	if err := grpcServer.Start(); err != nil {
 		log.Fatalf("failed to start grpc server %s", err)

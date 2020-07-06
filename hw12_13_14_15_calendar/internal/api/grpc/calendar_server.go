@@ -11,8 +11,8 @@ import (
 	"github.com/google/uuid"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	"github.com/sirupsen/logrus"
+	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/models"
 	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/services/calendar"
-	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/pkg/models"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
@@ -21,14 +21,16 @@ type CalendarAPIServer struct {
 	log             logrus.FieldLogger
 	host            string
 	grcServer       *grpc.Server
-	calendarService *calendar.Calendar
+	calendarService calendar.Srv
+	interceptors    []grpc.UnaryServerInterceptor
 }
 
-func NewCalendarAPIServer(log logrus.FieldLogger, host string, calendarService *calendar.Calendar) *CalendarAPIServer {
+func NewCalendarAPIServer(log logrus.FieldLogger, host string, calendarService calendar.Srv, interceptors []grpc.UnaryServerInterceptor) *CalendarAPIServer {
 	return &CalendarAPIServer{
 		log:             log,
 		host:            host,
 		calendarService: calendarService,
+		interceptors:    interceptors,
 	}
 }
 
@@ -37,9 +39,16 @@ func (c *CalendarAPIServer) Start() error {
 	if err != nil {
 		return fmt.Errorf("failed to listen %w", err)
 	}
-	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(grpc_logrus.UnaryServerInterceptor(logrus.NewEntry(c.log.(*logrus.Logger)))),
-	)
+
+	opt := make([]grpc.ServerOption, 0, len(c.interceptors)+1)
+	opt = append(opt, grpc.UnaryInterceptor(grpc_logrus.UnaryServerInterceptor(logrus.NewEntry(c.log.(*logrus.Logger)))))
+
+	for _, interceptor := range c.interceptors {
+		opt = append(opt, grpc.UnaryInterceptor(interceptor))
+	}
+
+	grpcServer := grpc.NewServer(opt...)
+
 	reflection.Register(grpcServer)
 
 	RegisterCalendarServer(grpcServer, c)
@@ -62,8 +71,8 @@ func (c *CalendarAPIServer) Stop() {
 	c.log.Printf("Successfully stop grpc server")
 }
 
-func (c *CalendarAPIServer) CreateEvent(ctx context.Context, ev *Event) (*EventId, error) {
-	mEv, err := unmarshalEvent(ev)
+func (c *CalendarAPIServer) CreateEvent(ctx context.Context, ev *CreateEventRequest) (*CreateEventResponse, error) {
+	mEv, err := unmarshalEvent(ev.Event)
 	if err != nil {
 		return nil, err
 	}
@@ -71,12 +80,12 @@ func (c *CalendarAPIServer) CreateEvent(ctx context.Context, ev *Event) (*EventI
 	if err != nil {
 		return nil, err
 	}
-	return &EventId{
+	return &CreateEventResponse{
 		Id: id.String(),
 	}, nil
 }
 
-func (c *CalendarAPIServer) UpdateEvent(ctx context.Context, ev *EventUpdate) (*empty.Empty, error) {
+func (c *CalendarAPIServer) UpdateEvent(ctx context.Context, ev *EventUpdateRequest) (*empty.Empty, error) {
 	id, err := uuid.Parse(ev.Id)
 	if err != nil {
 		return nil, err
@@ -92,7 +101,7 @@ func (c *CalendarAPIServer) UpdateEvent(ctx context.Context, ev *EventUpdate) (*
 	return &empty.Empty{}, nil
 }
 
-func (c *CalendarAPIServer) DeleteEvent(ctx context.Context, ev *EventId) (*empty.Empty, error) {
+func (c *CalendarAPIServer) DeleteEvent(ctx context.Context, ev *DeleteEventRequest) (*empty.Empty, error) {
 	id, err := uuid.Parse(ev.Id)
 	if err != nil {
 		return nil, err
@@ -104,7 +113,7 @@ func (c *CalendarAPIServer) DeleteEvent(ctx context.Context, ev *EventId) (*empt
 	return &empty.Empty{}, nil
 }
 
-func (c *CalendarAPIServer) GetAllEvents(ctx context.Context, em *empty.Empty) (*Events, error) {
+func (c *CalendarAPIServer) GetAllEvents(ctx context.Context, em *empty.Empty) (*GetAllEventsResponse, error) {
 	mEvs, err := c.calendarService.GetAllEvents(ctx)
 	if err != nil {
 		return nil, err
@@ -117,12 +126,12 @@ func (c *CalendarAPIServer) GetAllEvents(ctx context.Context, em *empty.Empty) (
 		}
 		resEvs = append(resEvs, ev)
 	}
-	return &Events{
+	return &GetAllEventsResponse{
 		Events: resEvs,
 	}, nil
 }
 
-func (c *CalendarAPIServer) GetEventByID(ctx context.Context, ev *EventId) (*Event, error) {
+func (c *CalendarAPIServer) GetEventByID(ctx context.Context, ev *GetEventByIDRequest) (*GetEventByIDResponse, error) {
 	id, err := uuid.Parse(ev.Id)
 	if err != nil {
 		return nil, err
@@ -135,10 +144,10 @@ func (c *CalendarAPIServer) GetEventByID(ctx context.Context, ev *EventId) (*Eve
 	if err != nil {
 		return nil, err
 	}
-	return res, nil
+	return &GetEventByIDResponse{Event: res}, nil
 }
 
-func (c *CalendarAPIServer) FindDayEvents(ctx context.Context, dayDate *DateRequest) (*Events, error) {
+func (c *CalendarAPIServer) FindDayEvents(ctx context.Context, dayDate *FindDayEventsRequest) (*FindDayEventsResponse, error) {
 	day, err := ptypes.Timestamp(dayDate.Date)
 	if err != nil {
 		return nil, fmt.Errorf("error while unmarshal day data %w", err)
@@ -155,12 +164,12 @@ func (c *CalendarAPIServer) FindDayEvents(ctx context.Context, dayDate *DateRequ
 		}
 		resEvs = append(resEvs, ev)
 	}
-	return &Events{
+	return &FindDayEventsResponse{
 		Events: resEvs,
 	}, nil
 }
 
-func (c *CalendarAPIServer) FindWeekEvents(ctx context.Context, weekDay *DateRequest) (*Events, error) {
+func (c *CalendarAPIServer) FindWeekEvents(ctx context.Context, weekDay *FindWeekEventsRequest) (*FindWeekEventsResponse, error) {
 	day, err := ptypes.Timestamp(weekDay.Date)
 	if err != nil {
 		return nil, fmt.Errorf("error while unmarshal day data %w", err)
@@ -177,12 +186,12 @@ func (c *CalendarAPIServer) FindWeekEvents(ctx context.Context, weekDay *DateReq
 		}
 		resEvs = append(resEvs, ev)
 	}
-	return &Events{
+	return &FindWeekEventsResponse{
 		Events: resEvs,
 	}, nil
 }
 
-func (c *CalendarAPIServer) FindMonthEvents(ctx context.Context, monthDay *DateRequest) (*Events, error) {
+func (c *CalendarAPIServer) FindMonthEvents(ctx context.Context, monthDay *FindMonthEventsRequest) (*FindMonthEventsResponse, error) {
 	day, err := ptypes.Timestamp(monthDay.Date)
 	if err != nil {
 		return nil, fmt.Errorf("error while unmarshal day data %w", err)
@@ -199,7 +208,7 @@ func (c *CalendarAPIServer) FindMonthEvents(ctx context.Context, monthDay *DateR
 		}
 		resEvs = append(resEvs, ev)
 	}
-	return &Events{
+	return &FindMonthEventsResponse{
 		Events: resEvs,
 	}, nil
 }

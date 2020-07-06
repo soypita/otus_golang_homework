@@ -9,12 +9,22 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/pkg/api"
+
 	"github.com/google/uuid"
-	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/pkg/models"
+	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/models"
 
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/services/calendar"
+)
+
+type ProcessType int
+
+const (
+	DAY ProcessType = iota
+	WEEK
+	MONTH
 )
 
 type LoggingResponseWriter struct {
@@ -33,12 +43,12 @@ func (lrw *LoggingResponseWriter) WriteHeader(code int) {
 
 type CalendarAPIServer struct {
 	log             logrus.FieldLogger
-	calendarService *calendar.Calendar
+	calendarService calendar.Srv
 	host            string
 	server          *http.Server
 }
 
-func NewCalendarAPIServer(log logrus.FieldLogger, host string, calendarService *calendar.Calendar) *CalendarAPIServer {
+func NewCalendarAPIServer(log logrus.FieldLogger, host string, calendarService calendar.Srv, addMiddlewares []func(http.Handler) http.Handler) *CalendarAPIServer {
 	service := &CalendarAPIServer{
 		log:             log,
 		calendarService: calendarService,
@@ -48,9 +58,13 @@ func NewCalendarAPIServer(log logrus.FieldLogger, host string, calendarService *
 	router.Use(service.ContentTypeMiddleware)
 	router.Use(service.LoggingMiddleware)
 
+	for _, m := range addMiddlewares {
+		router.Use(m)
+	}
+
 	router.HandleFunc("/health", service.HealthCheck).Methods("GET")
 
-	// events edpoint
+	// calendar endpoints
 	router.HandleFunc("/events", service.CreateEvent).Methods("PUT")
 	router.HandleFunc("/events/{id}", service.UpdateEvent).Methods("POST")
 	router.HandleFunc("/events/{id}", service.DeleteEventByID).Methods("DELETE")
@@ -133,22 +147,23 @@ func (c *CalendarAPIServer) HealthCheck(w http.ResponseWriter, r *http.Request) 
 }
 
 func (c *CalendarAPIServer) CreateEvent(w http.ResponseWriter, r *http.Request) {
-	event := &models.Event{}
-	err := json.NewDecoder(r.Body).Decode(event)
+	eventReq := api.CreateEventRequest{}
+	err := json.NewDecoder(r.Body).Decode(&eventReq)
 	if err != nil {
 		c.log.Printf("failed to get body %w", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	id, err := c.calendarService.CreateEvent(context.Background(), event)
+
+	ev := unmarshalEvent(eventReq.Event)
+	id, err := c.calendarService.CreateEvent(context.Background(), ev)
 	if err != nil {
 		c.log.Printf("failed to create event %w", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	err = json.NewEncoder(w).Encode(map[string]string{
-		"id": id.String(),
+	err = json.NewEncoder(w).Encode(&api.CreateEventResponse{
+		ID: id.String(),
 	})
 
 	if err != nil {
@@ -158,8 +173,8 @@ func (c *CalendarAPIServer) CreateEvent(w http.ResponseWriter, r *http.Request) 
 }
 
 func (c *CalendarAPIServer) UpdateEvent(w http.ResponseWriter, r *http.Request) {
-	event := &models.Event{}
-	err := json.NewDecoder(r.Body).Decode(event)
+	eventReq := api.EventUpdateRequest{}
+	err := json.NewDecoder(r.Body).Decode(&eventReq)
 	if err != nil {
 		c.log.Printf("failed to get body %w", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -174,7 +189,8 @@ func (c *CalendarAPIServer) UpdateEvent(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = c.calendarService.UpdateEvent(context.Background(), eID, event)
+	ev := unmarshalEvent(eventReq.Event)
+	err = c.calendarService.UpdateEvent(context.Background(), eID, ev)
 	if err != nil {
 		c.log.Printf("failed to update event %w", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -208,7 +224,14 @@ func (c *CalendarAPIServer) GetAllEvents(w http.ResponseWriter, r *http.Request)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	err = json.NewEncoder(w).Encode(&events)
+	resEv := make([]*api.EventDTO, 0, len(events))
+	for _, ev := range events {
+		mEv := marshalEvent(ev)
+		resEv = append(resEv, mEv)
+	}
+	err = json.NewEncoder(w).Encode(&api.GetAllEventsResponse{
+		Events: resEv,
+	})
 	if err != nil {
 		c.log.Printf("failed to get all events %w", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -232,7 +255,8 @@ func (c *CalendarAPIServer) FindEventByID(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = json.NewEncoder(w).Encode(event)
+	mEv := marshalEvent(event)
+	err = json.NewEncoder(w).Encode(&api.FindEventByIDResponse{Event: mEv})
 	if err != nil {
 		c.log.Printf("failed write response %w", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -241,42 +265,50 @@ func (c *CalendarAPIServer) FindEventByID(w http.ResponseWriter, r *http.Request
 }
 
 func (c *CalendarAPIServer) FindDayEvents(w http.ResponseWriter, r *http.Request) {
-	sDay := r.FormValue("from")
-	startDay, err := time.Parse("2006-01-02T15:04:05-0700", sDay)
-	if err != nil {
-		c.log.Printf("failed to parse from day %w", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	events, err := c.calendarService.FindDayEvents(context.Background(), startDay)
-	if err != nil {
-		c.log.Printf("failed to find day events %w", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	err = json.NewEncoder(w).Encode(&events)
-	if err != nil {
-		c.log.Printf("failed to write response %w", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	c.processDaysRequest(w, r, DAY)
 }
 
 func (c *CalendarAPIServer) FindWeekEvents(w http.ResponseWriter, r *http.Request) {
+	c.processDaysRequest(w, r, WEEK)
+}
+
+func (c *CalendarAPIServer) FindMonthEvents(w http.ResponseWriter, r *http.Request) {
+	c.processDaysRequest(w, r, MONTH)
+}
+
+func (c *CalendarAPIServer) processDaysRequest(w http.ResponseWriter, r *http.Request, t ProcessType) {
 	sDay := r.FormValue("from")
+	var err error
+	var events []*models.Event
 	startDay, err := time.Parse("2006-01-02T15:04:05-0700", sDay)
 	if err != nil {
 		c.log.Printf("failed to parse from day %w", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	events, err := c.calendarService.FindWeekEvents(context.Background(), startDay)
+
+	switch t {
+	case DAY:
+		events, err = c.calendarService.FindDayEvents(context.Background(), startDay)
+	case WEEK:
+		events, err = c.calendarService.FindWeekEvents(context.Background(), startDay)
+	case MONTH:
+		events, err = c.calendarService.FindMonthEvents(context.Background(), startDay)
+	}
 	if err != nil {
-		c.log.Printf("failed to find week events %w", err)
+		c.log.Printf("failed to find events %w", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	err = json.NewEncoder(w).Encode(&events)
+
+	resEv := make([]*api.EventDTO, 0, len(events))
+	for _, ev := range events {
+		mEv := marshalEvent(ev)
+		resEv = append(resEv, mEv)
+	}
+	err = json.NewEncoder(w).Encode(&api.FindMonthEventsResponse{
+		Events: resEv,
+	})
 	if err != nil {
 		c.log.Printf("failed to write response %w", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -284,24 +316,24 @@ func (c *CalendarAPIServer) FindWeekEvents(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-func (c *CalendarAPIServer) FindMonthEvents(w http.ResponseWriter, r *http.Request) {
-	sDay := r.FormValue("from")
-	startDay, err := time.Parse("2006-01-02T15:04:05-0700", sDay)
-	if err != nil {
-		c.log.Printf("failed to parse from day %w", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+func unmarshalEvent(ev *api.EventDTO) *models.Event {
+	return &models.Event{
+		Header:       ev.Header,
+		Date:         ev.Date,
+		Duration:     ev.Duration,
+		Description:  ev.Description,
+		OwnerID:      ev.OwnerID,
+		NotifyBefore: ev.NotifyBefore,
 	}
-	events, err := c.calendarService.FindWeekEvents(context.Background(), startDay)
-	if err != nil {
-		c.log.Printf("failed to find month events %w", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	err = json.NewEncoder(w).Encode(&events)
-	if err != nil {
-		c.log.Printf("failed to write response %w", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+}
+
+func marshalEvent(mEv *models.Event) *api.EventDTO {
+	return &api.EventDTO{
+		Header:       mEv.Header,
+		Date:         mEv.Date,
+		Duration:     mEv.Duration,
+		Description:  mEv.Description,
+		OwnerID:      mEv.OwnerID,
+		NotifyBefore: mEv.NotifyBefore,
 	}
 }

@@ -1,11 +1,11 @@
-package calendar
+package simple
 
 import (
 	"context"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/models"
 	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/repository/inmemory"
-	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/pkg/models"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"

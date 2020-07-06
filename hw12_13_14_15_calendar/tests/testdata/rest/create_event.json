@@ -1,8 +1,10 @@
 {
-  "header": "test",
-  "date": "2020-06-28T00:40:08.532352+03:00",
-  "duration": 10,
-  "description": "test description",
-  "owner_id": "f47ac10b-58cc-0372-8567-0e02b2c3d479",
-  "notify_before": 0
+  "event": {
+    "header": "test",
+    "date": "2020-06-28T00:40:08.532352+03:00",
+    "duration": 10,
+    "description": "test description",
+    "owner_id": "f47ac10b-58cc-0372-8567-0e02b2c3d479",
+    "notify_before": 0
+  }
 }

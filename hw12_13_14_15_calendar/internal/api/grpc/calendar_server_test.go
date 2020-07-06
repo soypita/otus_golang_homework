@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/providers"
-	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/services/calendar"
+	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/services/calendar/simple"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
@@ -31,7 +31,7 @@ func TestBasicGrpcServer(t *testing.T) {
 	if err != nil {
 		log.Fatalf("failed to initialize repository %s", err)
 	}
-	c := calendar.NewCalendar(repo)
+	c := simple.NewCalendar(repo)
 	RegisterCalendarServer(s, &CalendarAPIServer{
 		log:             log,
 		calendarService: c,
@@ -51,21 +51,22 @@ func TestBasicGrpcServer(t *testing.T) {
 	client := NewCalendarClient(conn)
 
 	t.Run("successfully create event", func(t *testing.T) {
-		resp, err := client.CreateEvent(ctx, &Event{
-			Header: "Test",
-			Date: &timestamp.Timestamp{
-				Seconds: 100,
-				Nanos:   0,
-			},
-			Duration: &duration.Duration{
-				Seconds: 10,
-				Nanos:   0,
-			},
-			Description: "Test",
-			OwnerId:     uuid.New().String(),
-			NotifyBefore: &duration.Duration{
-				Seconds: 0,
-				Nanos:   0,
+		resp, err := client.CreateEvent(ctx, &CreateEventRequest{
+			Event: &Event{Header: "Test",
+				Date: &timestamp.Timestamp{
+					Seconds: 100,
+					Nanos:   0,
+				},
+				Duration: &duration.Duration{
+					Seconds: 10,
+					Nanos:   0,
+				},
+				Description: "Test",
+				OwnerId:     uuid.New().String(),
+				NotifyBefore: &duration.Duration{
+					Seconds: 0,
+					Nanos:   0,
+				},
 			},
 		})
 		assert.Nil(t, err)
@@ -74,21 +75,23 @@ func TestBasicGrpcServer(t *testing.T) {
 	})
 
 	t.Run("should return create event error", func(t *testing.T) {
-		_, err := client.CreateEvent(ctx, &Event{
-			Header: "Test",
-			Date: &timestamp.Timestamp{
-				Seconds: 100,
-				Nanos:   0,
-			},
-			Duration: &duration.Duration{
-				Seconds: 10,
-				Nanos:   0,
-			},
-			Description: "Test",
-			OwnerId:     uuid.New().String(),
-			NotifyBefore: &duration.Duration{
-				Seconds: 0,
-				Nanos:   0,
+		_, err := client.CreateEvent(ctx, &CreateEventRequest{
+			Event: &Event{
+				Header: "Test",
+				Date: &timestamp.Timestamp{
+					Seconds: 100,
+					Nanos:   0,
+				},
+				Duration: &duration.Duration{
+					Seconds: 10,
+					Nanos:   0,
+				},
+				Description: "Test",
+				OwnerId:     uuid.New().String(),
+				NotifyBefore: &duration.Duration{
+					Seconds: 0,
+					Nanos:   0,
+				},
 			},
 		})
 		assert.NotNil(t, err)
