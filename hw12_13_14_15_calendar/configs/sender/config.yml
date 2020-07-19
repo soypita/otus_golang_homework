@@ -1,0 +1,9 @@
+log:
+  path: logs/logfile.log
+  level: INFO
+
+ampq:
+  uri: "amqp://guest:guest@localhost:5672/"
+  queue_name: events
+  exchange_name: ev_exchange
+  exchange_type: direct

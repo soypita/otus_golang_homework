@@ -52,7 +52,9 @@ func TestBasicGrpcServer(t *testing.T) {
 
 	t.Run("successfully create event", func(t *testing.T) {
 		resp, err := client.CreateEvent(ctx, &CreateEventRequest{
-			Event: &Event{Header: "Test",
+			Event: &Event{
+				Id:     uuid.New().String(),
+				Header: "Test",
 				Date: &timestamp.Timestamp{
 					Seconds: 100,
 					Nanos:   0,
@@ -77,6 +79,7 @@ func TestBasicGrpcServer(t *testing.T) {
 	t.Run("should return create event error", func(t *testing.T) {
 		_, err := client.CreateEvent(ctx, &CreateEventRequest{
 			Event: &Event{
+				Id:     uuid.New().String(),
 				Header: "Test",
 				Date: &timestamp.Timestamp{
 					Seconds: 100,

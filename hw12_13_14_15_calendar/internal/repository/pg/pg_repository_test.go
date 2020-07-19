@@ -30,13 +30,13 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}
-	resource, err := pool.Run("postgres", "9.6", []string{"POSTGRES_USER=soypita", "POSTGRES_PASSWORD=soypita", "POSTGRES_DB=calendar"})
+	resource, err := pool.Run("postgres", "9.6", []string{"POSTGRES_USER=soypita", "POSTGRES_PASSWORD=soypita", "POSTGRES_DB=calendarcfg"})
 	if err != nil {
 		log.Fatalf("Could not start resource: %s", err)
 	}
 
 	dsn := fmt.Sprintf("postgres://soypita:soypita@localhost:%s/%s?sslmode=disable",
-		resource.GetPort("5432/tcp"), "calendar")
+		resource.GetPort("5432/tcp"), "calendarcfg")
 
 	if err = pool.Retry(func() error {
 		db, err = sqlx.Open("postgres", dsn)

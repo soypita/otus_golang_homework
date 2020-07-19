@@ -7,7 +7,7 @@ import (
 )
 
 type Event struct {
-	ID           uuid.UUID     `json:"-"`
+	ID           uuid.UUID     `json:"id"`
 	Header       string        `json:"header"`
 	Date         time.Time     `json:"date"`
 	Duration     time.Duration `json:"duration"`

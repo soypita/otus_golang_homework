@@ -1,0 +1,18 @@
+event_api:
+  host: ""
+  grpc_port: 8090
+
+log:
+  path: logs/logfile.log
+  level: INFO
+
+# schedule time in seconds
+schedule:
+  notify: 3
+  clean: 10
+
+ampq:
+  uri: "amqp://guest:guest@localhost:5672/"
+  queue_name: events
+  exchange_name: ev_exchange
+  exchange_type: direct

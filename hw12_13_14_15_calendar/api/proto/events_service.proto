@@ -18,12 +18,13 @@ service Calendar {
 }
 
 message Event {
-  string header = 1;
-  google.protobuf.Timestamp date = 2;
-  google.protobuf.Duration duration = 3;
-  string description = 4;
-  string ownerId = 5;
-  google.protobuf.Duration notifyBefore = 6;
+  string id = 1;
+  string header = 2;
+  google.protobuf.Timestamp date = 3;
+  google.protobuf.Duration duration = 4;
+  string description = 5;
+  string ownerId = 6;
+  google.protobuf.Duration notifyBefore = 7;
 }
 
 message CreateEventRequest {
