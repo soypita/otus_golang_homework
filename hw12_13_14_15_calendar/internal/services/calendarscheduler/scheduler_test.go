@@ -32,7 +32,7 @@ type mockPublisher struct {
 	Msgs []*api.NotificationDTO
 }
 
-func (m mockPublisher) Connect() error {
+func (m mockPublisher) Connect(context.Context) error {
 	return nil
 }
 

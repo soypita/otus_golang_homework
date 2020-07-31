@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/cenkalti/backoff/v3"
@@ -36,14 +35,14 @@ func NewPublisher(log logrus.FieldLogger, uri, exchangeName, exchangeType, queue
 	}
 }
 
-func (s *Publisher) reconnect() error {
+func (s *Publisher) reconnect(ctx context.Context) error {
 	be := backoff.NewExponentialBackOff()
 	be.MaxElapsedTime = time.Minute
 	be.InitialInterval = 1 * time.Second
 	be.Multiplier = 2
 	be.MaxInterval = 15 * time.Second
 
-	b := backoff.WithContext(be, context.Background())
+	b := backoff.WithContext(be, ctx)
 	for {
 		d := b.NextBackOff()
 		if d == backoff.Stop {
@@ -51,7 +50,7 @@ func (s *Publisher) reconnect() error {
 		}
 		<-time.After(d)
 		if err := s.connect(); err != nil {
-			log.Printf("could not connect in reconnect call: %+v", err)
+			s.log.Printf("could not connect in reconnect call: %+v", err)
 			continue
 		}
 		return nil
@@ -109,7 +108,7 @@ func (s *Publisher) connect() error {
 	return nil
 }
 
-func (s *Publisher) Connect() error {
+func (s *Publisher) Connect(ctx context.Context) error {
 	var err error
 	if err = s.connect(); err != nil {
 		return fmt.Errorf("error: %v", err)
@@ -117,14 +116,22 @@ func (s *Publisher) Connect() error {
 
 	go func() {
 		for {
-			if <-s.done != nil {
-				s.log.Println("try to reconnect...")
-				err := s.reconnect()
-				if err != nil {
-					s.log.Println("reconnecting error: ", err)
-					return
+			select {
+			case <-ctx.Done():
+				s.log.Println(ctx.Err())
+				return
+			case resDone := <-s.done:
+				if resDone != nil {
+					s.log.Println("try to reconnect...")
+					err := s.reconnect(ctx)
+					if err != nil {
+						s.log.Println("reconnecting error: ", err)
+						return
+					}
+					s.log.Println("success reconnect")
 				}
-				s.log.Println("success reconnect")
+			default:
+				continue
 			}
 		}
 	}()

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/cenkalti/backoff/v3"
@@ -36,14 +35,14 @@ func NewSubscriber(log logrus.FieldLogger, uri, exchangeName, exchangeType, queu
 	}
 }
 
-func (s *Subscriber) reconnect() (<-chan amqp.Delivery, error) {
+func (s *Subscriber) reconnect(ctx context.Context) (<-chan amqp.Delivery, error) {
 	be := backoff.NewExponentialBackOff()
 	be.MaxElapsedTime = time.Minute
 	be.InitialInterval = 1 * time.Second
 	be.Multiplier = 2
 	be.MaxInterval = 15 * time.Second
 	var err error
-	b := backoff.WithContext(be, context.Background())
+	b := backoff.WithContext(be, ctx)
 	for {
 		d := b.NextBackOff()
 		if d == backoff.Stop {
@@ -52,7 +51,7 @@ func (s *Subscriber) reconnect() (<-chan amqp.Delivery, error) {
 
 		<-time.After(d)
 		if err = s.connect(); err != nil {
-			log.Printf("could not connect in reconnect call: %+v", err)
+			s.log.Printf("could not connect in reconnect call: %+v", err)
 			continue
 		}
 		msgs, err := s.announceQueue()
@@ -147,7 +146,8 @@ func (s *Subscriber) connect() error {
 	return nil
 }
 
-func (s *Subscriber) Listen(handler func(msg *api.NotificationDTO) error) error {
+//nolint:gocognit
+func (s *Subscriber) Listen(ctx context.Context, handler func(msg *api.NotificationDTO) error) error {
 	var err error
 	if err = s.connect(); err != nil {
 		return fmt.Errorf("error: %v", err)
@@ -162,24 +162,40 @@ func (s *Subscriber) Listen(handler func(msg *api.NotificationDTO) error) error 
 
 	for {
 		go func() {
-			for msg := range msgs {
-				notification := &api.NotificationDTO{}
-				if err := json.Unmarshal(msg.Body, notification); err != nil {
-					s.log.Println("error while read notification from queue : %s", err)
-				}
-				if err := handler(notification); err != nil {
-					s.log.Println("error while handle message: %s", err)
+			for {
+				select {
+				case <-ctx.Done():
+					s.log.Println("finish sending: ", ctx.Err())
+					return
+				case msg, ok := <-msgs:
+					if !ok {
+						return
+					}
+					notification := &api.NotificationDTO{}
+					if err := json.Unmarshal(msg.Body, notification); err != nil {
+						s.log.Println("error while read notification from queue : %s", err)
+						continue
+					}
+					if err := handler(notification); err != nil {
+						s.log.Println("error while handle message: %s", err)
+					}
 				}
 			}
 		}()
 
-		if <-s.done != nil {
-			s.log.Println("try to reconnect...")
-			msgs, err = s.reconnect()
-			if err != nil {
-				return fmt.Errorf("reconnecting error: %w", err)
+		select {
+		case <-ctx.Done():
+			s.log.Println(ctx.Err())
+			return nil
+		case resDone := <-s.done:
+			if resDone != nil {
+				s.log.Println("try to reconnect...")
+				msgs, err = s.reconnect(ctx)
+				if err != nil {
+					return fmt.Errorf("reconnecting error: %w", err)
+				}
+				s.log.Println("success reconnect")
 			}
-			s.log.Println("success reconnect")
 		}
 	}
 }

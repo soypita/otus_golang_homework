@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 	"net"
@@ -38,7 +39,10 @@ func main() {
 	}
 
 	pub := ampq.NewPublisher(log, config.AMPQ.URI, config.AMPQ.ExchangeName, config.AMPQ.ExchangeType, config.AMPQ.QueueName)
-	err = pub.Connect()
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	err = pub.Connect(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -64,7 +68,7 @@ func main() {
 	go func() {
 		<-notifyCh
 		scheduler.Stop()
+		cancel()
 	}()
-
 	scheduler.Start()
 }
