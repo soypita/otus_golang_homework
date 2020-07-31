@@ -15,20 +15,52 @@ import (
 )
 
 type SchedulerService struct {
-	log    logrus.FieldLogger
-	pub    publisher.Srv
-	client grpc.CalendarClient
+	log        logrus.FieldLogger
+	pub        publisher.Srv
+	client     grpc.CalendarClient
+	notifyTick *time.Ticker
+	cleanTick  *time.Ticker
+	doneCh     chan struct{}
 }
 
-func NewSchedulerService(log logrus.FieldLogger, pub publisher.Srv, client grpc.CalendarClient) *SchedulerService {
+func NewSchedulerService(log logrus.FieldLogger, pub publisher.Srv, client grpc.CalendarClient, notifyTick, cleanTick *time.Ticker, ) *SchedulerService {
 	return &SchedulerService{
-		log:    log,
-		pub:    pub,
-		client: client,
+		log:        log,
+		pub:        pub,
+		client:     client,
+		notifyTick: notifyTick,
+		cleanTick:  cleanTick,
+		doneCh:     make(chan struct{}),
 	}
 }
 
-func (s *SchedulerService) ProcessDayEvents() error {
+func (s *SchedulerService) Start() {
+	for {
+		select {
+		case <-s.doneCh:
+			s.log.Println("scheduler successfully stop")
+			return
+		case <-s.notifyTick.C:
+			s.log.Println("start to process notifications...")
+			if err := s.processDayEvents(); err != nil {
+				s.log.Printf("error while running scheduler %s\n", err)
+			}
+		case <-s.cleanTick.C:
+			s.log.Println("start to cleanup...")
+			if err := s.deleteOldData(); err != nil {
+				s.log.Printf("error while running scheduler %s\n", err)
+			}
+		default:
+			continue
+		}
+	}
+}
+
+func (s *SchedulerService) Stop() {
+	close(s.doneCh)
+}
+
+func (s *SchedulerService) processDayEvents() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	ev, err := s.client.FindDayEvents(ctx, &grpc.FindDayEventsRequest{
@@ -73,7 +105,7 @@ func (s *SchedulerService) ProcessDayEvents() error {
 	return nil
 }
 
-func (s *SchedulerService) DeleteOldData() error {
+func (s *SchedulerService) deleteOldData() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	currTms := time.Now().AddDate(-1, 0, 0)

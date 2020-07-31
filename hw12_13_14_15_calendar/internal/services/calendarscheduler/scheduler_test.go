@@ -64,7 +64,11 @@ func TestBasicScheduler(t *testing.T) {
 
 	client := server.NewCalendarClient(conn)
 	mP := &mockPublisher{}
-	scheduler := NewSchedulerService(log, mP, client)
+	scheduler := &SchedulerService{
+		log:    log,
+		pub:    mP,
+		client: client,
+	}
 
 	t.Run(`should successfully send day notification`, func(t *testing.T) {
 		ev, err := marshalEvent(&models.Event{
@@ -82,7 +86,7 @@ func TestBasicScheduler(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotEqual(t, uuid.Nil, resp.Id)
 
-		err = scheduler.ProcessDayEvents()
+		err = scheduler.processDayEvents()
 		assert.NoError(t, err)
 		assert.NotEmpty(t, mP.Msgs)
 		sendEv := mP.Msgs[0]
@@ -104,7 +108,7 @@ func TestBasicScheduler(t *testing.T) {
 		resp, err := client.CreateEvent(ctx, &server.CreateEventRequest{Event: ev})
 		assert.NoError(t, err)
 		assert.NotEqual(t, uuid.Nil, resp.Id)
-		err = scheduler.DeleteOldData()
+		err = scheduler.deleteOldData()
 		assert.NoError(t, err)
 		_, err = client.GetEventByID(ctx, &server.GetEventByIDRequest{Id: resp.Id})
 		assert.Error(t, err)

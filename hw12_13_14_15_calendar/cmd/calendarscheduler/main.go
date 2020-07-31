@@ -9,8 +9,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
 	api "github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/api/grpc"
 	"google.golang.org/grpc"
 
@@ -53,37 +51,20 @@ func main() {
 
 	client := api.NewCalendarClient(conn)
 
-	scheduler := calendarscheduler.NewSchedulerService(log, pub, client)
-
 	notifyCh := make(chan os.Signal, 1)
 	signal.Notify(notifyCh, syscall.SIGINT, syscall.SIGTERM)
 
 	notifTick := time.NewTicker(time.Duration(config.Schedule.Notify) * time.Second)
 	cleanupTick := time.NewTicker(time.Duration(config.Schedule.Clean) * time.Second)
+	defer notifTick.Stop()
+	defer cleanupTick.Stop()
 
-	go scheduleNotifications(notifTick, log, scheduler)
-	go scheduleCleanup(cleanupTick, log, scheduler)
+	scheduler := calendarscheduler.NewSchedulerService(log, pub, client, notifTick, cleanupTick)
 
-	<-notifyCh
-	notifTick.Stop()
-	cleanupTick.Stop()
-	log.Println("scheduler successfully stop")
-}
+	go func() {
+		<-notifyCh
+		scheduler.Stop()
+	}()
 
-func scheduleNotifications(tick *time.Ticker, log *logrus.Logger, scheduler *calendarscheduler.SchedulerService) {
-	for range tick.C {
-		log.Println("start to process notifications...")
-		if err := scheduler.ProcessDayEvents(); err != nil {
-			log.Printf("error while running scheduler %s\n", err)
-		}
-	}
-}
-
-func scheduleCleanup(tick *time.Ticker, log *logrus.Logger, scheduler *calendarscheduler.SchedulerService) {
-	for range tick.C {
-		log.Println("start to cleanup...")
-		if err := scheduler.DeleteOldData(); err != nil {
-			log.Printf("error while running scheduler %s\n", err)
-		}
-	}
+	scheduler.Start()
 }
