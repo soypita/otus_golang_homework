@@ -23,7 +23,7 @@ type SchedulerService struct {
 	doneCh     chan struct{}
 }
 
-func NewSchedulerService(log logrus.FieldLogger, pub publisher.Srv, client grpc.CalendarClient, notifyTick, cleanTick *time.Ticker, ) *SchedulerService {
+func NewSchedulerService(log logrus.FieldLogger, pub publisher.Srv, client grpc.CalendarClient, notifyTick, cleanTick *time.Ticker) *SchedulerService {
 	return &SchedulerService{
 		log:        log,
 		pub:        pub,
