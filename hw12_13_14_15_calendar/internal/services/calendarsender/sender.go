@@ -1,8 +1,6 @@
 package calendarsender
 
 import (
-	"runtime"
-
 	"github.com/sirupsen/logrus"
 	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/pubsub/subscriber"
 	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/pkg/api"
@@ -25,7 +23,6 @@ func (s *SenderService) ListenAndProcess() error {
 		s.log.Printf("receive msg: %v\n", *msg)
 		return nil
 	}
-	tNum := runtime.GOMAXPROCS(0)
 
-	return s.sub.Listen(h, tNum)
+	return s.sub.Listen(h)
 }

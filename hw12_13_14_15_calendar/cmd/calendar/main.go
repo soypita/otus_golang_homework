@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"log"
 	"net"
 	"os"
 
@@ -20,17 +21,17 @@ func main() {
 	flag.Parse()
 	config, err := calendarcfg.NewConfig(*configPath)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	logFile, err := os.OpenFile(config.Log.Path, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	log, err := logger.NewLogger(logFile, config.Log.Level)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	restAddr := net.JoinHostPort(config.Host, config.RestPort)

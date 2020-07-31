@@ -32,6 +32,7 @@ func NewSubscriber(log logrus.FieldLogger, uri, exchangeName, exchangeType, queu
 		exchangeName: exchangeName,
 		exchangeType: exchangeType,
 		queue:        queue,
+		done:         make(chan error),
 	}
 }
 
@@ -146,7 +147,7 @@ func (s *Subscriber) connect() error {
 	return nil
 }
 
-func (s *Subscriber) Listen(handler func(msg *api.NotificationDTO) error, threadNum int) error {
+func (s *Subscriber) Listen(handler func(msg *api.NotificationDTO) error) error {
 	var err error
 	if err = s.connect(); err != nil {
 		return fmt.Errorf("error: %v", err)
@@ -160,19 +161,17 @@ func (s *Subscriber) Listen(handler func(msg *api.NotificationDTO) error, thread
 	s.log.Println("success  announce queue")
 
 	for {
-		for i := 0; i < threadNum; i++ {
-			go func() {
-				for msg := range msgs {
-					notification := &api.NotificationDTO{}
-					if err := json.Unmarshal(msg.Body, notification); err != nil {
-						s.log.Println("error while read notification from queue : %s", err)
-					}
-					if err := handler(notification); err != nil {
-						s.log.Println("error while handle message: %s", err)
-					}
+		go func() {
+			for msg := range msgs {
+				notification := &api.NotificationDTO{}
+				if err := json.Unmarshal(msg.Body, notification); err != nil {
+					s.log.Println("error while read notification from queue : %s", err)
 				}
-			}()
-		}
+				if err := handler(notification); err != nil {
+					s.log.Println("error while handle message: %s", err)
+				}
+			}
+		}()
 
 		if <-s.done != nil {
 			s.log.Println("try to reconnect...")

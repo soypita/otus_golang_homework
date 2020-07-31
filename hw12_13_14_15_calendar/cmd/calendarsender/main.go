@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"log"
 	"os"
 
 	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/configs/sendercfg"
@@ -15,16 +16,16 @@ func main() {
 	flag.Parse()
 	config, err := sendercfg.NewConfig(*configPath)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	logFile, err := os.OpenFile(config.Log.Path, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	log, err := logger.NewLogger(logFile, config.Log.Level)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	sub := ampq.NewSubscriber(log, config.AMPQ.URI, config.AMPQ.ExchangeName, config.AMPQ.ExchangeType, config.AMPQ.QueueName)
@@ -33,6 +34,6 @@ func main() {
 
 	log.Println("start to listen events queue...")
 	if err := sender.ListenAndProcess(); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"log"
 	"net"
 	"os"
 	"os/signal"
@@ -25,28 +26,28 @@ func main() {
 
 	config, err := schedulercfg.NewConfig(*configPath)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	logFile, err := os.OpenFile(config.Log.Path, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	log, err := logger.NewLogger(logFile, config.Log.Level)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	pub := ampq.NewPublisher(log, config.AMPQ.URI, config.AMPQ.ExchangeName, config.AMPQ.ExchangeType, config.AMPQ.QueueName)
 	err = pub.Connect()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	conn, err := grpc.Dial(net.JoinHostPort(config.EventAPI.Host, config.EventAPI.GrpcPort), grpc.WithInsecure())
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	defer conn.Close()
 

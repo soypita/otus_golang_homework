@@ -80,19 +80,19 @@ func TestCalendarService(t *testing.T) {
 		calendar := NewCalendar(repo)
 		firstTime, err := time.Parse("2006-01-02T15:04:05-0700", "2020-06-06T20:00:00-0300")
 		if err != nil {
-			panic(err)
+			t.Fatal(err)
 		}
 		secondTime, err := time.Parse("2006-01-02T15:04:05-0700", "2020-06-06T15:00:00-0300")
 		if err != nil {
-			panic(err)
+			t.Fatal(err)
 		}
 		thirdTime, err := time.Parse("2006-01-02T15:04:05-0700", "2020-05-06T15:10:00-0300")
 		if err != nil {
-			panic(err)
+			t.Fatal(err)
 		}
 		startDayTime, err := time.Parse("2006-01-02T15:04:05-0700", "2020-06-06T00:00:00-0300")
 		if err != nil {
-			panic(err)
+			t.Fatal(err)
 		}
 		firstEvent := &models.Event{
 			Header:       "Test",
@@ -138,19 +138,19 @@ func TestCalendarService(t *testing.T) {
 		calendar := NewCalendar(repo)
 		firstTime, err := time.Parse("2006-01-02T15:04:05-0700", "2020-06-07T20:00:00-0300")
 		if err != nil {
-			panic(err)
+			t.Fatal(err)
 		}
 		secondTime, err := time.Parse("2006-01-02T15:04:05-0700", "2020-06-08T15:00:00-0300")
 		if err != nil {
-			panic(err)
+			t.Fatal(err)
 		}
 		thirdTime, err := time.Parse("2006-01-02T15:04:05-0700", "2020-05-06T15:00:00-0300")
 		if err != nil {
-			panic(err)
+			t.Fatal(err)
 		}
 		startWeekTime, err := time.Parse("2006-01-02T15:04:05-0700", "2020-06-05T00:00:00-0300")
 		if err != nil {
-			panic(err)
+			t.Fatal(err)
 		}
 		firstEvent := &models.Event{
 			Header:       "Test",
@@ -196,19 +196,19 @@ func TestCalendarService(t *testing.T) {
 		calendar := NewCalendar(repo)
 		firstTime, err := time.Parse("2006-01-02T15:04:05-0700", "2020-05-29T20:00:00-0300")
 		if err != nil {
-			panic(err)
+			t.Fatal(err)
 		}
 		secondTime, err := time.Parse("2006-01-02T15:04:05-0700", "2020-06-03T15:00:00-0300")
 		if err != nil {
-			panic(err)
+			t.Fatal(err)
 		}
 		thirdTime, err := time.Parse("2006-01-02T15:04:05-0700", "2020-07-06T15:00:00-0300")
 		if err != nil {
-			panic(err)
+			t.Fatal(err)
 		}
 		startMonthTime, err := time.Parse("2006-01-02T15:04:05-0700", "2020-05-06T00:00:00-0300")
 		if err != nil {
-			panic(err)
+			t.Fatal(err)
 		}
 		firstEvent := &models.Event{
 			Header:       "Test",

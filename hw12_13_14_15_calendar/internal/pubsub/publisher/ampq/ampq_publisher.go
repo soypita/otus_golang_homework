@@ -32,6 +32,7 @@ func NewPublisher(log logrus.FieldLogger, uri, exchangeName, exchangeType, queue
 		exchangeName: exchangeName,
 		exchangeType: exchangeType,
 		queue:        queue,
+		done:         make(chan error),
 	}
 }
 
@@ -48,7 +49,6 @@ func (s *Publisher) reconnect() error {
 		if d == backoff.Stop {
 			return fmt.Errorf("stop reconnecting")
 		}
-
 		<-time.After(d)
 		if err := s.connect(); err != nil {
 			log.Printf("could not connect in reconnect call: %+v", err)
