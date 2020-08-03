@@ -4,12 +4,15 @@ import (
 	"context"
 	"time"
 
+	"github.com/jmoiron/sqlx"
+
 	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/models"
 
 	"github.com/google/uuid"
 )
 
 type EventsRepository interface {
+	GetDB() *sqlx.DB
 	CreateEvent(context.Context, *models.Event) (uuid.UUID, error)
 	UpdateEvent(context.Context, uuid.UUID, *models.Event) error
 	DeleteEvent(context.Context, uuid.UUID) error

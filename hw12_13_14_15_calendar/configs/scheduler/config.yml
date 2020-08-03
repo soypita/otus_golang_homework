@@ -1,5 +1,5 @@
 event_api:
-  host: ""
+  host: "calendar"
   grpc_port: 8090
 
 log:
@@ -12,7 +12,7 @@ schedule:
   clean: 10
 
 ampq:
-  uri: "amqp://guest:guest@localhost:5672/"
+  uri: "amqp://guest:guest@rabbitmq:5672/"
   queue_name: events
   exchange_name: ev_exchange
   exchange_type: direct

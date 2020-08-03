@@ -48,4 +48,5 @@ func main() {
 	if err := sender.ListenAndProcess(ctx); err != nil {
 		log.Fatal(err)
 	}
+	log.Println("successfully stop listener")
 }

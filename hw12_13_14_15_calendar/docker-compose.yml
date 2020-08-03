@@ -1,15 +1,5 @@
-version: '3.1'
+version: '3'
 services:
-    calendar:
-        image: calendar:latest
-        ports:
-            - "8080:8080"
-        depends_on:
-            - database
-        volumes:
-            - "./configs/:/app/configs/"
-            - "./logs/:/app/logs/"
-        command: ./app/calendar -config=/app/configs/config.yml
     database:
         image: postgres
         environment:
@@ -20,3 +10,39 @@ services:
             - /tmp/database-data:/var/lib/postgresql/data/
         ports:
             - 5432:5432
+    calendar:
+        build:
+            context: .
+            dockerfile: deployments/calendar/Dockerfile
+        ports:
+            - "8080:8080"
+        depends_on:
+            - database
+        volumes:
+            - "./configs/calendar/config.yml:/app/config.yml"
+            - "./logs/calendar/:/app/logs/"
+            - "./migrations/:/app/migrations"
+
+    rabbitmq:
+        image: rabbitmq:3-management
+        ports:
+            - 15672:15672
+            - 5672:5672
+    scheduler:
+        build:
+            context: .
+            dockerfile: deployments/scheduler/Dockerfile
+        depends_on:
+            - rabbitmq
+        volumes:
+            - "./configs/scheduler/config.yml:/app/config.yml"
+            - "./logs/scheduler/:/app/logs/"
+    sender:
+        build:
+            context: .
+            dockerfile: deployments/sender/Dockerfile
+        depends_on:
+            - rabbitmq
+        volumes:
+            - "./configs/sender/config.yml:/app/config.yml"
+            - "./logs/sender/:/app/logs/"

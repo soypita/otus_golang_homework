@@ -5,5 +5,6 @@ log:
   path: logs/logfile.log
   level: INFO
 database:
-  in_memory: true
-  dsn: "host=database port=5432 user=soypita password=soypita dbname=calendarcfg sslmode=disable"
+  in_memory: false
+  dsn: "host=database port=5432 user=soypita password=soypita dbname=calendar sslmode=disable"
+  migrations_dir: "migrations"

@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jmoiron/sqlx"
+
 	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/repository"
 
 	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/models"
@@ -25,6 +27,10 @@ func NewInMemRepository(log logrus.FieldLogger) repository.EventsRepository {
 		mtx:    &sync.RWMutex{},
 		events: make(map[uuid.UUID]*models.Event),
 	}
+}
+
+func (r *InMemRepository) GetDB() *sqlx.DB {
+	return nil
 }
 
 func (r *InMemRepository) CreateEvent(ctx context.Context, event *models.Event) (uuid.UUID, error) {

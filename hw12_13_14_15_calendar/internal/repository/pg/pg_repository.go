@@ -28,6 +28,10 @@ func NewPGRepository(log logrus.FieldLogger, db *sqlx.DB) repository.EventsRepos
 	}
 }
 
+func (r *Repository) GetDB() *sqlx.DB {
+	return r.db
+}
+
 func (r *Repository) CreateEvent(ctx context.Context, event *models.Event) (uuid.UUID, error) {
 	_, err := r.db.NamedExecContext(ctx,
 		"INSERT INTO events (id, header, date, duration, description, ownerid, notifybefore) VALUES (:id, :header, :date, :duration, :description, :ownerid, :notifybefore)",

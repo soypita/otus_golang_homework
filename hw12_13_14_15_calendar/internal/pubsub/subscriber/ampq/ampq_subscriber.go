@@ -51,7 +51,7 @@ func (s *Subscriber) reconnect(ctx context.Context) (<-chan amqp.Delivery, error
 
 		<-time.After(d)
 		if err = s.connect(); err != nil {
-			s.log.Printf("could not connect in reconnect call: %+v", err)
+			s.log.Printf("could not connect: %+v", err)
 			continue
 		}
 		msgs, err := s.announceQueue()
@@ -149,16 +149,13 @@ func (s *Subscriber) connect() error {
 //nolint:gocognit
 func (s *Subscriber) Listen(ctx context.Context, handler func(msg *api.NotificationDTO) error) error {
 	var err error
-	if err = s.connect(); err != nil {
-		return fmt.Errorf("error: %v", err)
-	}
 
-	s.log.Println("try to announce queue")
-	msgs, err := s.announceQueue()
+	s.log.Println("try to connect to broker")
+	msgs, err := s.reconnect(ctx)
 	if err != nil {
-		return fmt.Errorf("error to announce queue: %w", err)
+		return fmt.Errorf("error connect to broker: %w", err)
 	}
-	s.log.Println("success  announce queue")
+	s.log.Println("success connect to broker")
 
 	for {
 		go func() {

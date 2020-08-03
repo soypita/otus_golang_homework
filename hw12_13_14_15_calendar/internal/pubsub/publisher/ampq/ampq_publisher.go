@@ -50,7 +50,7 @@ func (s *Publisher) reconnect(ctx context.Context) error {
 		}
 		<-time.After(d)
 		if err := s.connect(); err != nil {
-			s.log.Printf("could not connect in reconnect call: %+v", err)
+			s.log.Printf("could not connect: %+v", err)
 			continue
 		}
 		return nil
@@ -110,7 +110,7 @@ func (s *Publisher) connect() error {
 
 func (s *Publisher) Connect(ctx context.Context) error {
 	var err error
-	if err = s.connect(); err != nil {
+	if err = s.reconnect(ctx); err != nil {
 		return fmt.Errorf("error: %v", err)
 	}
 
