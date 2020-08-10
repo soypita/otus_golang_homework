@@ -10,6 +10,7 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.7.4
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.0
+	github.com/jinzhu/now v1.1.1
 	github.com/jmoiron/sqlx v1.2.1-0.20190826204134-d7d95172beb5
 	github.com/kr/text v0.2.0 // indirect
 	github.com/lib/pq v1.6.0

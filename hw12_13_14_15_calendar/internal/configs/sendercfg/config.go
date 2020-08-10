@@ -7,6 +7,11 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+type Output struct {
+	Type string `yaml:"type"`
+	Name string `yaml:"name"`
+}
+
 type Config struct {
 	Log struct {
 		Path  string `yaml:"path"`
@@ -19,6 +24,7 @@ type Config struct {
 		ExchangeName string `yaml:"exchange_name"`
 		ExchangeType string `yaml:"exchange_type"`
 	} `yaml:"ampq"`
+	Sink Output `yaml:"output"`
 }
 
 func NewConfig(file string) (*Config, error) {

@@ -7,3 +7,7 @@ ampq:
   queue_name: events
   exchange_name: ev_exchange
   exchange_type: direct
+
+output:
+  type: file
+  name: out.txt

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/google/uuid"
+	"github.com/jinzhu/now"
 	"github.com/sirupsen/logrus"
 	server "github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/api/grpc"
 	"github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar/internal/models"
@@ -74,7 +75,7 @@ func TestBasicScheduler(t *testing.T) {
 		ev, err := marshalEvent(&models.Event{
 			ID:           uuid.New(),
 			Header:       "Test",
-			Date:         time.Now().Add(1 * time.Hour),
+			Date:         now.BeginningOfDay().Add(1 * time.Hour),
 			Duration:     time.Duration(5) * time.Hour,
 			Description:  "Test event",
 			OwnerID:      uuid.New(),

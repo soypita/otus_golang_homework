@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jinzhu/now"
+
 	"github.com/golang/protobuf/ptypes"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -63,8 +65,14 @@ func (s *SchedulerService) Stop() {
 func (s *SchedulerService) processDayEvents() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+
+	currTime := now.BeginningOfDay()
+	tms, err := ptypes.TimestampProto(currTime)
+	if err != nil {
+		return fmt.Errorf("error while pull day events %w", err)
+	}
 	ev, err := s.client.FindDayEvents(ctx, &grpc.FindDayEventsRequest{
-		Date: ptypes.TimestampNow(),
+		Date: tms,
 	})
 
 	if err != nil {
@@ -78,6 +86,8 @@ func (s *SchedulerService) processDayEvents() error {
 
 	currTimestamp := time.Now()
 	w := &sync.WaitGroup{}
+	s.log.Println("events:", ev)
+
 	for _, event := range ev.Events {
 		w.Add(1)
 		go func(w *sync.WaitGroup, e *grpc.Event) {
@@ -92,8 +102,10 @@ func (s *SchedulerService) processDayEvents() error {
 				s.log.Printf("error while parse notify before field: %s\n", err)
 				return
 			}
+			s.log.Println("event:", *e)
 			notifyTimestamp := mEv.EventDate.Add(-notifyBefore)
 			if currTimestamp.After(notifyTimestamp) || currTimestamp.Equal(notifyTimestamp) {
+				s.log.Println("publish event")
 				err := s.pub.Send(mEv)
 				if err != nil {
 					s.log.Printf("error while sent event : %s\n", err)

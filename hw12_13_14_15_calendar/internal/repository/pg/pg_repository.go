@@ -120,7 +120,7 @@ func (r *Repository) FindDayEvents(ctx context.Context, day time.Time) ([]*model
 func (r *Repository) FindWeekEvents(ctx context.Context, day time.Time) ([]*models.Event, error) {
 	var events []*models.Event
 	err := r.db.SelectContext(ctx, &events,
-		`SELECT * FROM events WHERE date BETWEEN $1 AND $1 + (interval '7 weeks')`, day)
+		`SELECT * FROM events WHERE date BETWEEN $1 AND $1 + (interval '1 weeks')`, day)
 	if err != nil {
 		return nil, fmt.Errorf("error while find day events : %w", err)
 	}
