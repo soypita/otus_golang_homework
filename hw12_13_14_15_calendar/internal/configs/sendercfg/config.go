@@ -1,4 +1,4 @@
-package configs
+package sendercfg
 
 import (
 	"fmt"
@@ -8,17 +8,17 @@ import (
 )
 
 type Config struct {
-	Host     string `yaml:"host"`
-	RestPort string `yaml:"rest_port"`
-	GrpcPort string `yaml:"grpc_port"`
-	Log      struct {
+	Log struct {
 		Path  string `yaml:"path"`
 		Level string `yaml:"level"`
 	} `yaml:"log"`
-	Database struct {
-		InMemory bool   `yaml:"in_memory"`
-		DSN      string `yaml:"dsn"`
-	} `yaml:"database"`
+
+	AMPQ struct {
+		URI          string `yaml:"uri"`
+		QueueName    string `yaml:"queue_name"`
+		ExchangeName string `yaml:"exchange_name"`
+		ExchangeType string `yaml:"exchange_type"`
+	} `yaml:"ampq"`
 }
 
 func NewConfig(file string) (*Config, error) {

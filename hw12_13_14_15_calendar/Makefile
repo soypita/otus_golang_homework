@@ -1,5 +1,7 @@
 build:
 	go build -o bin/calendar cmd/calendar/main.go
+	go build -o bin/calendar_scheduler cmd/calendarscheduler/main.go
+	go build -o bin/calendar_sender cmd/calendarsender/main.go
 
 test:
 	go test -race ./...

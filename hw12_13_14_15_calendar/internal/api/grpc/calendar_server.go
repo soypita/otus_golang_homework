@@ -227,12 +227,22 @@ func unmarshalEvent(ev *Event) (*models.Event, error) {
 		return nil, fmt.Errorf("failed to umarshall event notifyBefore : %w", err)
 	}
 
+	id, err := uuid.Parse(ev.Id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to umarshall event id : %w", err)
+	}
+
+	ownerID, err := uuid.Parse(ev.OwnerId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to umarshall event ownerId : %w", err)
+	}
 	return &models.Event{
+		ID:           id,
 		Header:       ev.Header,
 		Date:         date,
 		Duration:     duration,
 		Description:  ev.Description,
-		OwnerID:      uuid.MustParse(ev.OwnerId),
+		OwnerID:      ownerID,
 		NotifyBefore: notifyBefore,
 	}, nil
 }
@@ -247,6 +257,7 @@ func marshalEvent(mEv *models.Event) (*Event, error) {
 	notifyBefore := ptypes.DurationProto(mEv.NotifyBefore)
 
 	return &Event{
+		Id:           mEv.ID.String(),
 		Header:       mEv.Header,
 		Date:         date,
 		Duration:     duration,

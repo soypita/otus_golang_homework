@@ -3,6 +3,7 @@ module github.com/soypita/otus_golang_homework/hw12_13_14_15_calendar
 go 1.14
 
 require (
+	github.com/cenkalti/backoff/v3 v3.2.2
 	github.com/golang/protobuf v1.3.5
 	github.com/golangci/golangci-lint v1.27.0 // indirect
 	github.com/google/go-cmp v0.5.0 // indirect
@@ -17,6 +18,7 @@ require (
 	github.com/pressly/goose v2.6.0+incompatible
 	github.com/sirupsen/logrus v1.6.0
 	github.com/steinfletcher/apitest v1.4.8
+	github.com/streadway/amqp v1.0.0
 	github.com/stretchr/testify v1.6.1
 	golang.org/x/net v0.0.0-20200226121028-0de0cce0169b // indirect
 	google.golang.org/appengine v1.6.6 // indirect

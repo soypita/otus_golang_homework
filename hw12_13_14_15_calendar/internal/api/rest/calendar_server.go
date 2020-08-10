@@ -64,7 +64,7 @@ func NewCalendarAPIServer(log logrus.FieldLogger, host string, calendarService c
 
 	router.HandleFunc("/health", service.HealthCheck).Methods("GET")
 
-	// calendar endpoints
+	// calendarcfg endpoints
 	router.HandleFunc("/events", service.CreateEvent).Methods("PUT")
 	router.HandleFunc("/events/{id}", service.UpdateEvent).Methods("POST")
 	router.HandleFunc("/events/{id}", service.DeleteEventByID).Methods("DELETE")
@@ -318,6 +318,7 @@ func (c *CalendarAPIServer) processDaysRequest(w http.ResponseWriter, r *http.Re
 
 func unmarshalEvent(ev *api.EventDTO) *models.Event {
 	return &models.Event{
+		ID:           ev.ID,
 		Header:       ev.Header,
 		Date:         ev.Date,
 		Duration:     ev.Duration,
@@ -329,6 +330,7 @@ func unmarshalEvent(ev *api.EventDTO) *models.Event {
 
 func marshalEvent(mEv *models.Event) *api.EventDTO {
 	return &api.EventDTO{
+		ID:           mEv.ID,
 		Header:       mEv.Header,
 		Date:         mEv.Date,
 		Duration:     mEv.Duration,

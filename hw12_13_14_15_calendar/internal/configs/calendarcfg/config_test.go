@@ -1,4 +1,4 @@
-package configs
+package calendarcfg
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -7,7 +7,7 @@ import (
 
 func TestBasicConfig(t *testing.T) {
 	t.Run(`should successfully parse valid config`, func(t *testing.T) {
-		validConfigPath := "../../tests/testdata/configs/valid_config.yml"
+		validConfigPath := "../../../tests/testdata/configs/valid_config.yml"
 		config, err := NewConfig(validConfigPath)
 		assert.NoError(t, err)
 		assert.NotNil(t, config)
@@ -20,7 +20,7 @@ func TestBasicConfig(t *testing.T) {
 		assert.Equal(t, config.Database.DSN, "host=test port=test user=test password=test dbname=test sslmode=disable")
 	})
 	t.Run(`should successfully parse valid config with additional fields`, func(t *testing.T) {
-		validConfigPath := "../../tests/testdata/configs/valid_config_additional.yml"
+		validConfigPath := "../../../tests/testdata/configs/valid_config_additional.yml"
 		config, err := NewConfig(validConfigPath)
 		assert.NoError(t, err)
 		assert.NotNil(t, config)
@@ -39,7 +39,7 @@ func TestBasicConfig(t *testing.T) {
 		assert.Nil(t, config)
 	})
 	t.Run(`should successfully parse json representation of yml config`, func(t *testing.T) {
-		invalidConfig := "../../tests/testdata/configs/config.json"
+		invalidConfig := "../../../tests/testdata/configs/config.json"
 		config, err := NewConfig(invalidConfig)
 		assert.NoError(t, err)
 		assert.NotNil(t, config)

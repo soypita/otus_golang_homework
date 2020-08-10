@@ -7,6 +7,7 @@ import (
 )
 
 type EventDTO struct {
+	ID           uuid.UUID     `json:"id"`
 	Header       string        `json:"header"`
 	Date         time.Time     `json:"date"`
 	Duration     time.Duration `json:"duration"`
