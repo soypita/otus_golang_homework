@@ -38,9 +38,17 @@ func main() {
 	grpcAddr := net.JoinHostPort(config.Host, config.GrpcPort)
 
 	repo, err := providers.NewRepository(log, config.Database.DSN, config.Database.InMemory)
+
 	if err != nil {
 		log.Fatalf("failed to initialize repository %s", err)
 	}
+
+	if !config.Database.InMemory {
+		if err := providers.RunMigration(repo, config.Database.MigrationsDir); err != nil {
+			log.Fatalf("failed to run migrations: %s", err.Error())
+		}
+	}
+
 	calendar := simple.NewCalendar(repo)
 
 	grpcServer := grpc.NewCalendarAPIServer(log, grpcAddr, calendar, nil)

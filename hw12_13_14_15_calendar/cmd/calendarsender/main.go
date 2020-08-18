@@ -32,7 +32,7 @@ func main() {
 	}
 
 	sub := ampq.NewSubscriber(log, config.AMPQ.URI, config.AMPQ.ExchangeName, config.AMPQ.ExchangeType, config.AMPQ.QueueName)
-	sender := calendarsender.NewSenderService(log, sub)
+	sender := calendarsender.NewSenderService(log, sub, &config.Sink)
 
 	notifyCh := make(chan os.Signal, 1)
 	signal.Notify(notifyCh, syscall.SIGINT, syscall.SIGTERM)
@@ -48,4 +48,6 @@ func main() {
 	if err := sender.ListenAndProcess(ctx); err != nil {
 		log.Fatal(err)
 	}
+
+	log.Println("successfully stop listener")
 }

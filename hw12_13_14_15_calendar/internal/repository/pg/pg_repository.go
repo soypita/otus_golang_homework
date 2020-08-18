@@ -28,6 +28,10 @@ func NewPGRepository(log logrus.FieldLogger, db *sqlx.DB) repository.EventsRepos
 	}
 }
 
+func (r *Repository) GetDB() *sqlx.DB {
+	return r.db
+}
+
 func (r *Repository) CreateEvent(ctx context.Context, event *models.Event) (uuid.UUID, error) {
 	_, err := r.db.NamedExecContext(ctx,
 		"INSERT INTO events (id, header, date, duration, description, ownerid, notifybefore) VALUES (:id, :header, :date, :duration, :description, :ownerid, :notifybefore)",
@@ -116,7 +120,7 @@ func (r *Repository) FindDayEvents(ctx context.Context, day time.Time) ([]*model
 func (r *Repository) FindWeekEvents(ctx context.Context, day time.Time) ([]*models.Event, error) {
 	var events []*models.Event
 	err := r.db.SelectContext(ctx, &events,
-		`SELECT * FROM events WHERE date BETWEEN $1 AND $1 + (interval '7 weeks')`, day)
+		`SELECT * FROM events WHERE date BETWEEN $1 AND $1 + (interval '1 weeks')`, day)
 	if err != nil {
 		return nil, fmt.Errorf("error while find day events : %w", err)
 	}

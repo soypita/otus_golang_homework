@@ -16,8 +16,9 @@ type Config struct {
 		Level string `yaml:"level"`
 	} `yaml:"log"`
 	Database struct {
-		InMemory bool   `yaml:"in_memory"`
-		DSN      string `yaml:"dsn"`
+		InMemory      bool   `yaml:"in_memory"`
+		DSN           string `yaml:"dsn"`
+		MigrationsDir string `yaml:"migrations_dir"`
 	} `yaml:"database"`
 }
 
